@@ -1,0 +1,37 @@
+-   Currently works with a default classifier & data
+
+-   Provide option to upload your own CLF via skops (secure persistence)
+
+-   Try to provide better visualisations than just the current plots if possible or at least integrate
+    it into the tool a bit better
+
+-   Could perhaps have user supply scripts & manually inject skops dump after "...".fit(x_train, y_train)
+
+-   With multiple dumps of the same clf type and data with varying hyperparameter, can implement
+    a "slider" effect (i.e one dump for C = 0, one for C=0.2, 0.4 etc). This can be considerably time consuming
+    unless done in parallel perhaps. Current trade off is retraining of the model
+
+-   Look into directory scanning for user provided scripts/clf files (recommended)
+
+-   Look into venv/way to allow different users to run this tool with different system environments.
+    (Perhaps a requirements.txt too)
+
+-   Ability to choose a dataset to load in (with appropriate checks to load in different types of sets).
+
+-   Ability to recognise the type of data that has been inputted, with appropriate measures for each type
+    i.e image, text, reg, wav
+    (will potentially need to apply pipeline to allow for vectorisation, grayscaling etc).
+
+-   Ability to choose data, Training/Test Split,
+    Ability to choose CLF method, Hyperparameter Customisation/Grid Search
+    (With good explanations for how each CLF works and the hyperparameters (We want to teach ML concepts
+    at the end of the day!!!)).
+
+-   Get more familiar with pyqt and try get better idea on how to retain information between widget transitions.
+
+-   Make it intuitive to use, and provide adequate comments to guide people into using the tool.
+
+-   Make it look a lot more pretty
+
+-   Work is very cut out for me hence need to stay committed each day or two, very important before things get complicated
+    with reports next semester.
