@@ -49,19 +49,25 @@ print(values)
 # ax1.set_title('Digit: {}'.format(y_vec[0]))
 
 
-# # 2: Apply SVM model using Scikit learn, choose hyperparameters
-# # at your own discretion, or via hyperparameter tuning e.g use gridsearch.
+# 2: Apply SVM model using Scikit learn, choose hyperparameters
+# at your own discretion, or via hyperparameter tuning e.g use gridsearch.
 
-# # 3: Apply Lime explainability object and try to plot the results
-# # for one particular prediction.
+# 3: Apply Lime explainability object and try to plot the results
+# for one particular prediction.
 
-# # 4: Investigate how you did this and whether you had to modify the
-# # structure of the model code to do task 3.
+# 4: Investigate how you did this and whether you had to modify the
+# structure of the model code to do task 3.
 
-# # 5: try multiple different predictions with lime and write what you find.
+# 5: try multiple different predictions with lime and write what you find.
 
-# # 6: Extra for experts: Try using a different model such as bayes or xgboost/random forest
-# # and try see how your explainability evaluations change for the same image dataset and predictions.
+# 6: Extra for experts: Try using a different model such as bayes or xgboost/random forest
+# and try see how your explainability evaluations change for the same image dataset and predictions.
 
-# # 7: Document the following: What parts of your code had to change to achieve this?
-# # Do you think this code can be easily swapped out for other models for example?
+# 7: Document the following: What parts of your code had to change to achieve this?
+# Do you think this code can be easily swapped out for other models for example?
+
+
+# Lime is able to explain any black box classifier, with two or more classes. All we require is that the classifier implements a function that takes in raw text or a numpy array and outputs a probability for each class.
+# Support for scikit-learn classifiers is built-in.
+
+# LIME segments images into "contiguous" superpixels - i.e. a bunch of same-ish colour pixels in a big cluster.
