@@ -1,5 +1,7 @@
 # This Python file uses the following encoding: utf-8
 from PyQt5.QtWidgets import *
+from PyQt5.QtGui import QDrag
+from PyQt5.QtCore import Qt, QMimeData
 from PyQt5.QtGui import QFont, QPixmap, QPainter
 from PyQt5.uic import loadUi
 import sys
@@ -15,7 +17,6 @@ from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
 from PIL import Image
-import matplotlib.image
 
 def transition(context):
     widget.addWidget(context)
@@ -43,6 +44,79 @@ class MainMenu(QMainWindow):
         if reply == QMessageBox.Yes:        QApplication.quit()
         else:                               QMessageBox.Close
 
+
+class DragButton(QPushButton):
+
+    id = None
+
+    # def __init__(self, id):
+    #     super(DragButton, self).__init__()
+    #     self.id
+
+    def mouseMoveEvent(self, e):
+
+        if e.buttons() == Qt.LeftButton:
+            drag = QDrag(self)
+            mime = QMimeData()
+            drag.setMimeData(mime)
+
+            pixmap = QPixmap(self.size())
+            self.render(pixmap)
+            drag.setPixmap(pixmap)
+
+            drag.exec_(Qt.MoveAction)
+    
+    def getID(self):
+        return self.id
+
+
+class ClassifierSelect(QWidget):
+
+    def getButtonID(self):
+        id = self.sender().getID()
+        pos = self.sender().geometry()        
+        print("You have clicked button " + str(id))
+        print("at position (" + str(pos.x())+", "+str(pos.y())+")")
+
+    def __init__(self):
+        super(ClassifierSelect, self).__init__()
+        self.setAcceptDrops(True)
+        back = QPushButton("Howdy", self)
+        back.clicked.connect(lambda: transition(DataSelect()))
+
+        self.blayout = QHBoxLayout()
+        for l in ['A', 'B', 'C', 'D']:
+            btn = DragButton(l)
+            btn.id = l
+            btn.clicked.connect(lambda: self.getButtonID())
+            self.blayout.addWidget(btn)
+
+        self.setLayout(self.blayout)
+        self.show() 
+
+    def dragEnterEvent(self, e):
+        e.accept()
+
+    def dropEvent(self, e):
+        pos = e.pos()
+        widget = e.source()
+        widget.move(pos)
+        
+        # print(self.blayout)
+        # print(self.blayout.count())
+        # for n in range(self.blayout.count()):
+        #     # Get the widget at each index in turn.
+        #     w = self.blayout.itemAt(n).widget()
+        #     if pos.x() < w.x() + w.size().width() // 2:
+        #         # We didn't drag past this widget.
+        #         # insert to the left of it.
+        #         self.blayout.insertWidget(n-1, widget)
+        #         break
+
+        # e.accept()
+
+
+
 class DataSelect(QWidget):
     def __init__(self):
         super(DataSelect, self).__init__()
@@ -50,6 +124,7 @@ class DataSelect(QWidget):
         self.pipe = None
         self.x_train, self.x_test, self.y_train, self.y_test = None, None, None, None
         self.sampleData.clicked.connect(lambda: transition(DataViewer()))
+        self.loadData.clicked.connect(lambda: transition(ClassifierSelect()))
         self.back.clicked.connect(lambda: transition(MainMenu()))
         self.show()
 
