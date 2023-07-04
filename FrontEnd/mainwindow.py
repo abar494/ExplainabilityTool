@@ -141,12 +141,28 @@ class DataViewer(QWidget):
         self.plotButton.clicked.connect(self.catClassify)
         self.show()
 
+    def enumerate(self, animal):
+        if animal == 'cats':
+            num = 0
+        elif animal == 'dogs':
+            num = 1
+        else:
+            num = 2
+        return num
+
     def catClassify(self):
         import glob
         fileList = glob.glob("Datasets/catdogpanda/*")
-        fileList = fileList[:200]        
-        x = np.stack([resize(np.array((Image.open(fname))), (100, 100)) for fname in fileList])
-        labels = [fname.split('_')[0].split('/')[-1] for fname in fileList]
+        fileList = fileList[:100]       
+
+        x = (255*np.stack([resize(np.array(Image.open(fname)), (100, 100)) for fname in fileList])).astype(np.uint8)
+        
+        print(x[4])
+        
+        labels = []
+        for fname in fileList:
+            animal = fname.split("_")[0].split("/")[-1]
+            labels.append(self.enumerate(animal))
 
         class PipeStep(object):
             """
@@ -171,10 +187,17 @@ class DataViewer(QWidget):
         clf.fit(self.x_train, self.y_train)
         print("done")
 
-        print(clf.predict())
         # print(labels[34])
 
         print(clf.score(self.x_test, self.y_test))
+        pred = self.enumerate(clf.predict(self.x_test)[3])
+        self.explain(self.x_test[3], pred, clf)
+
+        # print(clf.predict(self.x_test)[3])
+        # print(self.y_test[3])
+
+
+
 
 
 
@@ -182,29 +205,28 @@ class DataViewer(QWidget):
         # print(clf.predict(self.x_test[0]))
         # print(self.y_test[0])
 
-        # self.explain(2, self.x_test, self.y_test, clf)
 
 
-    # def explain(self, id, x_test, y_test, clf):
-    #     explainer = lime_image.LimeImageExplainer(verbose = False)
-    #     segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=200, ratio=0.2)
+    def explain(self, x, pred, clf):
+        explainer = lime_image.LimeImageExplainer(verbose = False)
+        segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=200, ratio=0.2)
 
-    #     explanation = explainer.explain_instance(x_test[id], 
-    #                                     classifier_fn = clf.predict_proba, 
-    #                                     top_labels=10, hide_color=0, num_samples=2000, segmentation_fn=segmenter)
+        explanation = explainer.explain_instance(x, 
+                                        classifier_fn = clf.predict_proba, 
+                                        top_labels=10, hide_color=0, num_samples=2000, segmentation_fn=segmenter)
 
-    #     temp, mask = explanation.get_image_and_mask(clf.predict(x_test[id]), positive_only=True, num_features=5, hide_rest=True, min_weight = 0.01)
-    #     fig, (ax1, ax2) = plt.subplots(1,2, figsize = (8, 4))
-    #     # ax1.imshow(label2rgb(mask,temp, bg_label = 0), interpolation = 'nearest')
-    #     ax1.imshow(mark_boundaries(temp, mask))
-    #     # ax1.set_title('Positive Regions for {}'.format(y_test[id]))
-    #     temp, mask = explanation.get_image_and_mask(clf.predict(x_test[id]), positive_only=False, num_features=10, hide_rest=False, min_weight = 0.01)
-    #     ax2.imshow(mark_boundaries(temp, mask))
-    #     # ax2.imshow(label2rgb(3-mask,temp, bg_label = 0), interpolation = 'nearest')
-    #     # ax2.set_title('Positive/Negative Regions for {}'.format(y_test[id]))
-    #     ax1.axis('off')
-    #     ax2.axis('off')
-    #     plt.show()
+        temp, mask = explanation.get_image_and_mask(pred, positive_only=True, num_features=10, hide_rest=True, min_weight = 0.01)
+        fig, (ax1, ax2) = plt.subplots(1,2, figsize = (8, 4))
+        # ax1.imshow(label2rgb(mask,temp, bg_label = 0), interpolation = 'nearest')
+        ax1.imshow(mark_boundaries(temp, mask))
+        # ax1.set_title('Positive Regions for {}'.format(y_test[id]))
+        temp, mask = explanation.get_image_and_mask(pred, positive_only=False, num_features=10, hide_rest=False, min_weight = 0.01)
+        ax2.imshow(mark_boundaries(temp, mask))
+        # ax2.imshow(label2rgb(3-mask,temp, bg_label = 0), interpolation = 'nearest')
+        # ax2.set_title('Positive/Negative Regions for {}'.format(y_test[id]))
+        ax1.axis('off')
+        ax2.axis('off')
+        plt.show()
 
 
 
@@ -255,15 +277,24 @@ class DataViewer(QWidget):
 
                 self.clfs[i][j].fit(self.x_train, self.y_train)
                 print(self.clfs[i][j].score(self.x_test, self.y_test))
-                prediction = []             
+                # prediction = np.zeros((784, 3))
+                
+                predictions = self.clfs[i][j].predict(self.x_test)
+                print("debug")
+
+                # img = self.x_test[3]
+                # for i in range(len(img)):
+                #     for j in range(len(img)):
+                #         for k in range(3):
+                #             prediction[(len(img)-1)*i + j][k] = img[i][j][k]
 
                 #         prediction.append(element)
                 # prediction = np.array(prediction).T
 
-                print(prediction.shape)
+                # print(prediction.shape)
 
-                print(self.clfs[i][j].predict(prediction))
-                print(self.y_test[3])
+                # print(self.clfs[i][j].predict(prediction))
+                # print(self.y_test[3])
 
         for i in range(120):
             im = Image.fromarray(self.x_test[i])
@@ -366,7 +397,7 @@ class Explainer(QWidget):
         print(clfs[self.slider1.value()][self.slider2.value()])
         self.explain(id, x_test, y_test, clfs[self.slider1.value()][self.slider2.value()])
 
-    # def explain(self, id, x_test, y_test, clf):
+    def explain(self, id, x_test, y_test, clf):
         explainer = lime_image.LimeImageExplainer(verbose = False)
         segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=200, ratio=0.2)
 
