@@ -153,17 +153,18 @@ class DataViewer(QWidget):
     def catClassify(self):
         import glob
         fileList = glob.glob("Datasets/catdogpanda/*")
-        fileList = fileList[:100]       
+        fileList = fileList[:700]       
 
-        x = (255*np.stack([resize(np.array(Image.open(fname)), (100, 100)) for fname in fileList])).astype(np.uint8)
-        
-        print(x[4])
-        
-        labels = []
+        x, labels = [], []
         for fname in fileList:
+            img = resize(np.array(Image.open(fname)), (100, 100))
+            if img.shape != (100, 100, 3):
+                img = gray2rgb(img)
+            x.append(img)
             animal = fname.split("_")[0].split("/")[-1]
             labels.append(self.enumerate(animal))
-
+        data = (255*np.stack(x)).astype(np.uint8)
+        
         class PipeStep(object):
             """
             Wrapper for turning functions into pipeline transforms (no-fitting)
@@ -181,7 +182,7 @@ class DataViewer(QWidget):
             ('Flatten Image', flatten_step),
             ('svc', SVC(probability=True))]) # SVC uses default params found here https://scikit-learn.org/stable/modules/generated/sklearn.svm.SVC.html#sklearn.svm.SVC
 
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(x, np.ravel(labels), train_size=0.8)
+        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(data, np.ravel(labels), train_size=0.8)
 
         # clf.fit(self.x_train, self.y_train)
         clf.fit(self.x_train, self.y_train)
