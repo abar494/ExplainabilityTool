@@ -19,6 +19,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
 from PIL import Image
 from skimage.transform import resize
+import glob
 
 
 def transition(context):
@@ -83,9 +84,10 @@ class ClassifierSelect(QWidget):
 
     def __init__(self):
         super(ClassifierSelect, self).__init__()
+        loadUi('FrontEnd/UI/Gallery.ui', self)
         self.setAcceptDrops(True)
-        back = QPushButton("Howdy", self)
-        back.clicked.connect(lambda: transition(DataSelect()))
+        # back = QPushButton("Howdy", self)
+        self.back.clicked.connect(lambda: transition(DataSelect()))
 
         self.blayout = QHBoxLayout()
         for l in ['A', 'B', 'C', 'D']:
@@ -151,7 +153,6 @@ class DataViewer(QWidget):
         return num
 
     def catClassify(self):
-        import glob
         fileList = glob.glob("Datasets/catdogpanda/*")
         fileList = fileList[:700]       
 
@@ -280,7 +281,7 @@ class DataViewer(QWidget):
                 print(self.clfs[i][j].score(self.x_test, self.y_test))
                 # prediction = np.zeros((784, 3))
                 
-                predictions = self.clfs[i][j].predict(self.x_test)
+                # predictions = self.clfs[i][j].predict(self.x_test)
                 print("debug")
 
                 # img = self.x_test[3]
@@ -335,8 +336,6 @@ class Gallery(QWidget):
     def __init__(self, x_test, y_test, clfs):
         #Sets labels etc
         super(Gallery, self).__init__()
-        # loadUi('FrontEnd/UI/Gallery.ui', self)
-
         back = QPushButton("Back", self)
         back.clicked.connect(lambda: transition(DataViewer(x_test, y_test, clfs)))
 
@@ -436,3 +435,6 @@ if __name__ == "__main__":
     widget.setFixedWidth(600)
     widget.show()
     sys.exit(app.exec_())
+
+
+
