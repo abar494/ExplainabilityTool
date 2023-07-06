@@ -1,8 +1,7 @@
 # This Python file uses the following encoding: utf-8
 from PyQt5.QtWidgets import *
-from PyQt5.QtGui import QDrag
 from PyQt5.QtCore import Qt, QMimeData, QPoint
-from PyQt5.QtGui import QFont, QPixmap, QPainter
+from PyQt5.QtGui import QFont, QPixmap, QPainter, QDrag
 from PyQt5.uic import loadUi
 import os
 import shutil
@@ -74,15 +73,6 @@ class MainMenu(QMainWindow):
     
 #     def getID(self):
 #         return self.id
-
-
-
-
-
-
-
-
-
 
 class DraggableLabel(QLabel):
 
@@ -179,16 +169,6 @@ class ClassifierSelect(QWidget):
         widget.move(pos - widget.initialPos)
         widget.hasLanded = False
         e.acceptProposedAction()
-
-
-
-
-
-
-
-
-
-
 
 
 
@@ -658,6 +638,3 @@ if __name__ == "__main__":
     ret = app.exec_()
     shutil.rmtree('Datasets/sampledata')
     sys.exit(ret)
-
-
-
