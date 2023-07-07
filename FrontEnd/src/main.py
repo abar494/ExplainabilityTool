@@ -17,9 +17,13 @@ class MainMenu(QMainWindow):
         super(MainMenu, self).__init__()
         loadUi('FrontEnd/UI/MainMenu.ui', self)
 
-        self.defaultCLF.clicked.connect(lambda: transition(stack, datahandler.DataViewer(stack)))
-        self.trainCLF.clicked.connect(lambda: transition(stack, datahandler.DataSelect(stack)))
-        self.exit.clicked.connect(self.closeApp)
+        self.defaultCLF.clicked.connect(
+            lambda: transition(stack, datahandler.DataViewer(stack)))
+        self.trainCLF.clicked.connect(
+            lambda: transition(stack, datahandler.DataSelect(stack)))
+        self.exit.clicked.connect(
+            self.closeApp)
+        
         self.show()
 
     def closeApp(self):
