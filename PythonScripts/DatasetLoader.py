@@ -5,13 +5,10 @@ import numpy as np
 # Convert gray images to RGB (increase number of channels)
 from skimage.color import gray2rgb
 import matplotlib.pyplot as plt  # Plotting Images
-from PyQt5.QtGui import QImage, QPixmap
-from PyQt5.QtWidgets import QFileDialog, QApplication, QMainWindow, QLabel, QWidget, QGridLayout, QVBoxLayout, QHBoxLayout, QFrame
+from PyQt5.QtWidgets import QFileDialog, QApplication, QWidget, QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import Qt
 from PyQt5 import uic
-from PyQt5.QtGui import QKeySequence
 import sys
-import inspect
 
 # Temp dark stylesheet
 dark_stylesheet = """
@@ -110,6 +107,20 @@ dark_stylesheet = """
         background-color: #444444;
     }
 
+    /* Set the background and text color for line edit */
+    QLineEdit {
+        background-color: #555555;
+        color: #FFFFFF;
+        border: 1px solid #888888;
+        padding: 5px;
+    }
+    
+    /* Set the background color of line edit when focused */
+    QLineEdit:focus {
+        background-color: #777777;
+        border: 1px solid #FFFFFF;
+    }
+
 """
 
 
@@ -128,6 +139,7 @@ class Dataset():
         self.limit = limit
         self.target_size = target_size
         self.num_images = 0
+        self.train_test_split = 0
 
         if root_dir is not None:
             self.data, self.label = self.load_dataset_from_dir(
@@ -198,6 +210,7 @@ class Dataset():
 
         return self.data, self.label
 
+    # TODO: Implement .mat handling
     def load_dataset_from_file(self, file_dir):
         """
         Load desired dataset from a pickle (.pkl) file.
@@ -211,6 +224,7 @@ class Dataset():
         # Copies attributes from loaded Dataset object into the Dataset object calling this function.
         for attr_name in loaded_dataset.__dict__:
             setattr(self, attr_name, getattr(loaded_dataset, attr_name))
+        self.get_num_images()
 
     def save_dataset_to_file(self, file_dir, file_name="dataset"):
         # Open a file in binary mode
@@ -232,44 +246,78 @@ class DataLoader(QWidget):
     def __init__(self):
         super().__init__()
         uic.loadUi("DatasetLoader.ui", self)
-        # Connect buttons to their functions
-        self.selectData.clicked.connect(self.select_pkl_file)
-        self.selectDir.clicked.connect(self.select_folder)
-        self.resetData.clicked.connect(self.clear_selection)
-        self.resetSpins.clicked.connect(self.clear_nums)
-        self.maxImages.valueChanged.connect(self.update_and_enable_clear_spins)
-        self.resizeX.valueChanged.connect(self.update_and_enable_clear_spins)
-        self.resizeY.valueChanged.connect(self.update_and_enable_clear_spins)
-        # Connect Train/Test Split sliders and spinboxes to their function
-        self.trainSlider.valueChanged.connect(self.update_sliders)
-        self.trainSpin.valueChanged.connect(self.update_sliders)
-        # Ensuring Test text, spinbox, and slider are disabled (Should always be disabled).
-        self.testSlider.setEnabled(False)
-        self.testSpin.setEnabled(False)
-        self.testText.setEnabled(False)
-        # Initially None or Zero
-        self.max_images_value = 0
-        self.resize_x_value = 0
-        self.resize_y_value = 0
-        self.train_test_split = 0.6  # training data e.g. 60%  (0.6).
-        self.folder_name = None
-        self.folder_directory = None
-        self.file_name = None
-        self.file_directory = None
+        self.init_button_connects()
+        self.init_initial_values()
+        self.init_sliders()
+        self.init_buttons_and_layouts()
         # Initially most buttons are disabled.
-        self.loadData.setEnabled(False)
-        self.resetData.setEnabled(False)
-        self.resetSpins.setEnabled(False)
-        self.enable_spin_boxes_sliders_and_text(False)
+
         # Set initial tool tips
         self.dataDir.setToolTip("Folder Directory: None")
         self.dataFile.setToolTip("File Directory: None")
+
+    # Connect buttons to their functions
+    def init_button_connects(self):
+        self.selectData.clicked.connect(self.select_file)
+        self.selectDir.clicked.connect(self.select_folder)
+        self.resetData.clicked.connect(self.reset_selection)
+        self.resetSpins.clicked.connect(self.reset_parameters)
+        self.back.clicked.connect(self.print_attributes)  # temp usage of back
+        self.maxImages.valueChanged.connect(self.update_spins)
+        self.resizeX.valueChanged.connect(self.update_spins)
+        self.resizeY.valueChanged.connect(self.update_spins)
+        # Connect Train/Test Split sliders and spinboxes to their function
+        self.trainSlider.valueChanged.connect(self.update_sliders)
+        self.trainSpin.valueChanged.connect(self.update_sliders)
+        # self.saveFile.clicked.connect(
+        #     lambda: self.save_file(self.fileName))
+
+    # Set attributes to their defaults
+    def init_initial_values(self):
+        self.max_images_value = 0
+        self.resize_x_value = None
+        self.resize_y_value = None
+        self.image_count = 0
+        self.largest_size = (0, 0)
+        self.smallest_size = (0, 0)
+        self.subdirectories = None
+        self.folder_directory = None
+        self.file_directory = None
+        self.folder_name = None
+        self.file_name = None
+        self.default_max_images = 0
+        self.default_max_resize = 0
+        self.num_classes = 0
+        self.save_file_name = None
+
+    # Set sliders to their defaults
+    def init_sliders(self):
+        self.default_train_split = self.train_test_split = 75
+        self.trainSlider.setValue(self.default_train_split)
+        self.testSlider.setValue(100 - self.default_train_split)
+        # Disable Test text, spinbox, and slider. Should always be disabled.
+        self.testSlider.setEnabled(False)
+        self.testSpin.setEnabled(False)
+        self.testText.setEnabled(False)
+
+    # Initialise all buttons and layouts
+    def init_buttons_and_layouts(self):
+        self.selectDir.setEnabled(True)
+        self.selectData.setEnabled(True)
+        self.resetData.setEnabled(False)
+        self.resetSpins.setEnabled(False)
+        self.resetData.setEnabled(False)
+        self.loadData.setEnabled(False)
+        self.dataFile.setText("Selected File: None")
+        self.dataDir.setText("Selected Folder: None")
+        self.enable_parameter_layout(False)
+        self.maxImages.setMaximum(100000)
+        self.saveFile.setEnabled(False)
+        self.fileName.setEnabled(False)
         # Initially disable information layout
-        self.layout = self.findChild(QVBoxLayout, "infoLayout")
-        self.enable_layout(False, self.layout)
+        self.enable_layout(False, self.findChild(QVBoxLayout, "infoLayout"))
 
     # Upate Train and Test split sliders.
-
     def update_sliders(self):
         # Check sender
         if self.sender() == self.trainSlider:
@@ -283,48 +331,47 @@ class DataLoader(QWidget):
 
         self.testSlider.setValue(complement)
         self.testSpin.setValue(complement)
-        self.train_test_split = train_test_split / 100
-
-        # If not default train/test split, enable reset
-        if (self.train_test_split != 0.6):
-            self.resetSpins.setEnabled(True)
-        else:
-            self.resetSpins.setEnabled(False)
+        self.train_test_split = train_test_split
+        self.check_enable_params()
         # print(self.train_test_split)
 
     # Update attributes with current spinbox values, and enable clearing of spinboxes.
-    def update_and_enable_clear_spins(self):
+    def update_spins(self):
         self.max_images_value = self.maxImages.value()
         self.resize_x_value = self.resizeX.value()
         self.resize_y_value = self.resizeY.value()
         print(self.max_images_value, self.resize_x_value, self.resize_y_value)
         # If any of the spinboxes have a none default value, enable the clear button
-        if (self.max_images_value != 0 or self.resize_x_value != 0 or self.resize_y_value != 0):
+        self.check_enable_params()
+
+    # If params aren't default, enable param reset.
+    def check_enable_params(self):
+        if (self.max_images_value != self.default_max_images or
+            self.resize_x_value != self.default_max_resize or
+            self.resize_y_value != self.default_max_resize or
+                self.train_test_split != self.default_train_split):
+
             self.resetSpins.setEnabled(True)
         else:
             self.resetSpins.setEnabled(False)
+    # Set spinbox values to default and disable clear button.
 
-    # Set spinbox values to 0 and disable clear button.
-    def clear_nums(self):
-        # Setting these values to 0 also automatically updates the corresponding class attributes (via ValueChanged()).
-        self.maxImages.setValue(0)
-        self.resizeX.setValue(0)
-        self.resizeY.setValue(0)
-        self.trainSpin.setValue(60)
+    # Reset all params.
+    def reset_parameters(self):
+        # Setting these values to default also automatically updates the corresponding class attributes (via ValueChanged()).
+        self.maxImages.setValue(self.default_max_images)
+        self.resizeX.setValue(self.default_max_resize)
+        self.resizeY.setValue(self.default_max_resize)
+        self.trainSpin.setValue(self.default_train_split)
         self.resetSpins.setEnabled(False)  # Disable Reset after pressing.
 
     # Clear selected files, re-enable and re-disable appropriate buttons and text
-    def clear_selection(self):
-        self.selectDir.setEnabled(True)
-        self.selectData.setEnabled(True)
-        self.loadData.setEnabled(False)
-        self.dataFile.setText("Selected File: None")
-        self.dataDir.setText("Selected Folder: None")
-        self.folder_name = None
-        self.file_name = None
-        self.resetData.setEnabled(False)
-        self.enable_spin_boxes_sliders_and_text(False)
-        self.clear_nums()
+    def reset_selection(self):
+        self.init_initial_values()
+        self.init_sliders()
+        self.init_buttons_and_layouts()
+        self.reset_parameters()
+        self.update_info()
 
     # Select the directory containing the dataset. Enable appropriate Pushbuttons and SpinBoxes
     def select_folder(self):
@@ -336,41 +383,83 @@ class DataLoader(QWidget):
             self.dataDir.setText("Selected Folder: " + self.folder_name)
             self.dataDir.setToolTip("Folder Directory: " +
                                     str(self.folder_directory))
-        # Ensures that everything is dis/enabled incase user cancels folder selection.
-        if self.folder_name != None:
+
             self.selectData.setEnabled(False)
             self.dataFile.setText("")
             self.loadData.setEnabled(True)
             self.resetData.setEnabled(True)
-            self.enable_spin_boxes_sliders_and_text(True)
+            self.enable_parameter_layout(True)
+            self.get_folder_info()
+            self.update_info()
 
-    # TODO: Implement helper function to display information about the selected folder/directory
-    # Helper function to display information about the selected folder/directory
+    # Get info about chosen folder.
     def get_folder_info(self):
-        print("Testing")
+        folder_name = self.folder_name
+        folder_directory = self.folder_directory
+        subdirectories = 0
+        image_count = 0
+        largest_size = (0, 0)
+        # Initial smallest size should be very high
+        smallest_size = (float('inf'), float('inf'))
+        try:
+            # Check if the folder exists
+            if os.path.exists(folder_directory):
+                # Get the list of subdirectories and files within the folder
+                entries = os.scandir(folder_directory)
 
-    # TODO: Implement function to display information about the selected file
-    # Helper function to display information about the selected file
-    def get_file_info(self):
-        pass
+                for entry in entries:
+                    if entry.is_dir():
+                        subdirectories += 1
+                        # Count the number of images within each subdirectory
+                        subdirectory_path = os.path.join(
+                            folder_directory, entry.name)
+                        images = [name for name in os.listdir(subdirectory_path) if os.path.isfile(
+                            os.path.join(subdirectory_path, name))]
 
-    # Disable or enable any layout.
-    def enable_layout(self, enable=True, layout=None):
-        for index in range(layout.count()):
-            item = layout.itemAt(index)
-            if item.widget():
-                item.widget().setEnabled(enable)
-            elif item.layout():
-                self.enable_layout(enable, item.layout())
+                        for image_name in images:
+                            image_path = os.path.join(
+                                subdirectory_path, image_name)
+                            image = Image.open(image_path)
+                            width, height = image.size
 
-    # Allows user to select a pickle file (.pkl) OR a MATLAB file (.mat)
-    def select_pkl_file(self):
+                            if width * height > largest_size[0] * largest_size[1]:
+                                largest_size = (width, height)
+
+                            if width * height < smallest_size[0] * smallest_size[1]:
+                                smallest_size = (width, height)
+
+                            image_count += 1
+                            image.close()
+
+                print("Folder Information:")
+                print(f"Name: {folder_name}")
+                print(f"Directory: {folder_directory}")
+                print(f"Number of Subdirectories: {subdirectories}")
+                print(f"Number of Images: {image_count}")
+                print(f"Largest Image Size: {largest_size}")
+                print(f"Smallest Image Size: {smallest_size}")
+
+                self.subdirectories = subdirectories
+                self.image_count = image_count
+                self.largest_size = largest_size
+                self.smallest_size = smallest_size
+
+                self.enable_layout(True, self.findChild(
+                    QVBoxLayout, "infoLayout"))
+                self.update_info()
+        except Exception as e:
+            print("Error occured: ", e)
+
+    # Select a .pkl (pickle) file
+    def select_file(self):
+        # Opens file explorer
         file_dialog = QFileDialog()
         file_dialog.setFileMode(QFileDialog.ExistingFile)
         file_dialog.setNameFilter("All files (*.pkl *.mat)")
 
         if file_dialog.exec_() == QFileDialog.Accepted:
             selected_files = file_dialog.selectedFiles()
+            # If the User does select a file (restricted to selecting one file only)
             if selected_files:
                 file_path = selected_files[0]
                 self.file_directory = file_path
@@ -379,44 +468,99 @@ class DataLoader(QWidget):
                 self.dataFile.setText("Selected File: " + self.file_name)
                 self.dataFile.setToolTip("File Directory: " +
                                          str(self.file_directory))
-        # Ensures that everything is dis/enabled incase user cancels file selection.
-        if self.file_name != None:
-            self.selectDir.setEnabled(False)
-            self.dataDir.setText("")
-            self.loadData.setEnabled(True)
-            self.resetData.setEnabled(True)
-            # if a file has been selected, disable use of spinboxes
-            self.enable_spin_boxes_sliders_and_text(True)
 
-    #
-    def enable_spin_boxes_sliders_and_text(self, enable=True):
-        # Disable/Enable SpinBoxes
+                self.selectDir.setEnabled(False)  # Select Folder button
+                self.dataDir.setText("")  # Remove text
+                self.loadData.setEnabled(True)
+                # Enable reset to clear file selection
+                self.resetData.setEnabled(True)
+                # if a file has been selected, enable use of spinboxes etc
+                self.enable_parameter_layout(True)
+                self.get_file_info()
+
+    # TODO: Implement function to display information about the selected file
+    # - Include .mat handling.
+    # Helper function to display information about the selected file
+    def get_file_info(self):
+
+        test = Dataset()
+        test.load_dataset_from_file(self.file_directory)
+        self.image_count = test.num_images
+        self.num_classes = len(test.label)
+        self.update_info()
+        print("Instance Attributes:")
+        # test.plot_image(0, 0)
+        self.resizeX.setValue(test.target_size[0])
+        self.resizeY.setValue(test.target_size[1])
+        self.maxImages.setValue(self.image_count//len(test.label))
+        # self.enable_parameter_layout(True)
+        self.maxImages.setMaximum(self.image_count//len(test.label))
+        # self.
+        self.enable_layout(True, self.findChild(QVBoxLayout, "infoLayout"))
+
+        for attr_name, attr_value in vars(test).items():
+            if not attr_name.startswith('__') and not callable(attr_value) and not isinstance(attr_value, (QWidget, QVBoxLayout, QHBoxLayout)):
+                if attr_name != "data":
+                    print(f"- {attr_name}: {attr_value}")
+
+    # Update dataset info with appropriate information.
+    def update_info(self):
+        layout = self.findChild(QVBoxLayout, "datasetInfo")
+
+        info_list = [self.folder_directory if self.file_directory is None else self.file_directory,
+                     self.folder_name if self.file_name is None else self.file_name,
+                     self.subdirectories,
+                     self.image_count,
+                     self.num_classes if self.folder_name is None else self.subdirectories,
+                     self.largest_size,
+                     self.smallest_size,
+                     (self.resize_x_value, self.resize_y_value),
+                     str(self.train_test_split) + str("%")]
+
+        for index in range(layout.count()):
+            item = layout.itemAt(index)
+            if item.widget():
+                item.widget().setText(str(info_list[index]))
+
+    # Helper function to disable and enable items in a given layout.
+    def enable_layout(self, enable=True, layout=None):
+        for index in range(layout.count()):
+            item = layout.itemAt(index)
+            if item.widget():
+                item.widget().setEnabled(enable)
+            elif item.layout():
+                self.enable_layout(enable, item.layout())
+
+    # Enable or Disable parameterLayout
+    def enable_parameter_layout(self, enable=True):
+        # Disable/Enable SpinBoxes and Text
         layout = self.findChild(QHBoxLayout, "parameterLayout")
         self.enable_layout(enable, layout)
+        self.trainText.setEnabled(enable)
+        # These items should always be off
         self.testSpin.setEnabled(False)
         self.testSlider.setEnabled(False)
         self.testText.setEnabled(False)
-        self.trainText.setEnabled(False)
-        # self.maxImages.setEnabled(enable)
-        # self.resizeX.setEnabled(enable)
-        # self.resizeY.setEnabled(enable)
-        # # Disable/Enable Text (change colours)
-        # self.maxText.setEnabled(enable)
-        # self.resizeXText.setEnabled(enable)
-        # self.resizeYText.setEnabled(enable)
 
-        # # Check which method is calling this method.
-        # # caller = inspect.currentframe().f_back.f_code.co_name
-        # # if caller == "select_pkl_file":
-        # #     enable = not enable
-        # # Disable/Enable Train/Test Sliders, SpinBoxes, and Text
-        # self.trainSpin.setEnabled(enable)
-        # self.trainSlider.setEnabled(enable)
-        # self.trainTestText.setEnabled(enable)
-        # self.trainText.setEnabled(enable)
+    #     # Connect the textChanged signal of the line edit to a custom slot
+    #     line_edit.textChanged.connect(self.handle_text_changed)
+
+    def save_file(self):
+        test = Dataset()
+
+        # test.save_dataset_to_file(self.save_file_name
+        # )
+        # self.save_file_name = self.
+        # print()
+
+    # Debugging method
+    def print_attributes(self):
+        print("Instance Attributes:")
+        for attr_name, attr_value in vars(self).items():
+            if not attr_name.startswith('__') and not callable(attr_value) and not isinstance(attr_value, (QWidget, QVBoxLayout, QHBoxLayout)):
+                print(f"- {attr_name}: {attr_value}")
 
     # Ctrl+w shortcut to close window for Windows
-
     def keyPressEvent(self, event):
         if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_W:
             self.close()
@@ -424,7 +568,7 @@ class DataLoader(QWidget):
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
-    # Initialize the dark theme
+    # Initialize dark theme
     app.setStyleSheet(dark_stylesheet)
     check = DataLoader()
     check.show()
@@ -432,8 +576,8 @@ if __name__ == "__main__":
 
     # Example Using Load from Directory
     root = r"C:\Users\space\OneDrive\Desktop\p4p\Caleb\Datasets\leaves\leaves"
-    limit = 200  # Set the desired limit for the subset
-    target_size = (300, 300)  # Set the desired target size for resizing
+    # limit = 200  # Set the desired limit for the subset
+    # target_size = (300, 300)  # Set the desired target size for resizing
     # Load from directory
     dataset1 = Dataset(root, limit, target_size)
     # __init__ function calls load_dataset_from_dir if root is provided.
