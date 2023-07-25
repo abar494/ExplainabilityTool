@@ -5,15 +5,17 @@ import datahandler
 from PyQt5.QtWidgets import QApplication, QMainWindow, QStackedWidget, QMessageBox
 from PyQt5.uic import loadUi
 
+
 def transition(stack, context):
     stack.addWidget(context)
-    nextIndex = stack.currentIndex()
+    next_index = stack.currentIndex()
     stack.removeWidget(stack.currentWidget())
-    stack.setCurrentIndex(nextIndex)
+    stack.setCurrentIndex(next_index)
+
 
 class MainMenu(QMainWindow):
     def __init__(self, stack, parent=None):
-        #Sets labels etc
+        # Sets labels etc
         super(MainMenu, self).__init__()
         loadUi('FrontEnd/UI/MainMenu.ui', self)
 
@@ -22,16 +24,17 @@ class MainMenu(QMainWindow):
         self.trainCLF.clicked.connect(
             lambda: transition(stack, datahandler.DataSelect(stack)))
         self.exit.clicked.connect(
-            self.closeApp)
+            self.close_app)
         
         self.show()
 
-    def closeApp(self):
+    def close_app(self):
         reply = QMessageBox.question(self, 'Message', 'Are you sure to quit?',
-                                QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
 
         if reply == QMessageBox.Yes:        QApplication.quit()
         else:                               QMessageBox.Close
+
 
 if __name__ == "__main__":
     if not os.path.isdir("Datasets/sampledata"):

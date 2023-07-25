@@ -29,22 +29,31 @@ class DataSelect(QWidget):
 
 
 class DataViewer(QWidget):
-    def __init__(self, stack, x_test=None, y_test=None, clfs=None):
+    def __init__(self, stack, prefs=None, x_test=None, y_test=None, iclf=None, clfs=None):
         super(DataViewer, self).__init__()
         loadUi('FrontEnd/UI/DataViewer.ui', self)
-        self.x_test, self.y_test, self.clfs = x_test, y_test, clfs
-        self.p = {
-            "C": [1, 3, 5],
-            "kernel": ['linear', 'poly', 'poly'],
-            "gamma": [0.5, 2, 5]
-        }
+        self.x_test, self.y_test, self.iclf, self.clfs = x_test, y_test, iclf, clfs
+        
         self.pipelineDict = self.initialisePipelineDict()
+
+        if prefs is None:
+            self.hps = {"probability":True, "C": 3, "kernel": 'linear', "gamma": 2}
+            self.clfType = "SVM"
+            self.var = "C"
+            self.vals = [1, 3, 5, 7, 9]
+        else:
+            self.hps = prefs["hps"]
+            self.clfType = prefs["clf"]
+            self.var = prefs["var"]
+            self.vals = prefs["vals"]
+
+
         self.backButton.clicked.connect(
             lambda: main.transition(stack, main.MainMenu(stack)))
         self.classifyButton.clicked.connect(self.defaultClassify)
         self.explainButton.clicked.connect(
             lambda: main.transition(
-            stack, gallery.Gallery(stack, self.x_test, self.y_test, self.clfs)))
+            stack, gallery.Gallery(stack, self.x_test, self.y_test, self.iclf, self.clfs, self.vals)))
         self.plotButton.clicked.connect(self.catClassify)
         
         self.show()
@@ -89,16 +98,19 @@ class DataViewer(QWidget):
             print("There needs to be at least two classes in the target set")
             return
 
-        self.clfs = [[[None for i in range(3)] for i in range(3)] for i in range(3)]
+        self.clfs = [None for i in range(len(self.vals))]
         self.sample(120)
         print("please wait a little while the classifier is fit to the data")
-        for i in range(3):
-            for j in range(3):
-                for k in range(3):
-                    self.clfs[i][j][k] = self.getPipeline(self.pipes, (i,j,k))
-                    self.clfs[i][j][k].fit(self.x_train, self.y_train)
-                    print(self.clfs[i][j][k].score(self.x_test, self.y_test))
-                    self.pipes.pop()
+        self.iclf = self.getPipeline(self.pipes, self.hps[self.var])
+        self.iclf.fit(self.x_train, self.y_train)
+        print(self.iclf.score(self.x_test, self.y_test))
+        self.pipes.pop()
+
+        for i in range(len(self.vals)):
+            self.clfs[i] = self.getPipeline(self.pipes, self.vals[i])
+            self.clfs[i].fit(self.x_train, self.y_train)
+            print(self.clfs[i].score(self.x_test, self.y_test))
+            self.pipes.pop()
         print("done")
 
     def initialisePipelineDict(self):
@@ -109,10 +121,11 @@ class DataViewer(QWidget):
                          self.PipeStep(lambda img_list: [rgb2gray(img) for img in img_list]))
         return pipelineDict
     
-    def getPipeline(self, pipes, coords):
-        clfTuple = ('svc', SVC(probability=True, C=self.p["C"][coords[0]],
-                                     kernel=self.p["kernel"][coords[1]],
-                                     gamma=self.p["gamma"][coords[2]]))
+    def getPipeline(self, pipes, val):
+        self.hps[self.var] = val
+        clfPipeName = self.clfType.lower()
+        constructor = globals()[self.clfType]
+        clfTuple = (clfPipeName, constructor(**self.hps))
         pipes.append(clfTuple)
         return Pipeline(pipes)
 

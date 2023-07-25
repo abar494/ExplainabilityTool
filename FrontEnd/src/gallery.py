@@ -7,14 +7,14 @@ from PyQt5.QtGui import QPixmap, QPainter
 
 
 class Gallery(QWidget):
-    def __init__(self, stack, x_test, y_test, clfs):
+    def __init__(self, stack, x_test, y_test, iclf, clfs, values):
         #Sets labels etc
         super(Gallery, self).__init__()
 
         back = QPushButton("Back", self)
         back.clicked.connect(
             lambda: main.transition(
-            stack, datahandler.DataViewer(stack, x_test, y_test, clfs)
+            stack, datahandler.DataViewer(stack, x_test, y_test, iclf, clfs, values)
             ))
         
         gridLayout = QGridLayout()
@@ -24,7 +24,7 @@ class Gallery(QWidget):
                 QPixmap("Datasets/sampledata/" + str(i) + ".png"), i)
             button.id = i
             button.clicked.connect(
-                lambda: self.explainerTransition(stack, x_test, y_test, clfs))
+                lambda: self.explainerTransition(stack, x_test, y_test, iclf, clfs, values))
             gridLayout.addWidget(button, (i)//3, (i)%3)
 
         groupBox.setLayout(gridLayout)
@@ -37,10 +37,10 @@ class Gallery(QWidget):
         self.setLayout(layout)
         self.show()
 
-    def explainerTransition(self, stack, x_test, y_test, clfs):
+    def explainerTransition(self, stack, x_test, y_test, iclf, clfs, values):
         id = self.sender().id
         main.transition(
-            stack, explainer.Explainer(stack, id, x_test, y_test, clfs))
+            stack, explainer.Explainer(stack, id, x_test, y_test, iclf, clfs, values))
 
 
     class PicButton(QAbstractButton):

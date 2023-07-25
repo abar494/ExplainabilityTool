@@ -1,32 +1,42 @@
-from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QPushButton
+from PyQt5.QtWidgets import QWidget, QComboBox, QLineEdit, QApplication, QLabel, QPushButton, QSpacerItem, QHBoxLayout, QVBoxLayout, QSizePolicy, QGroupBox, QGridLayout
 import main
 import datahandler
 from PyQt5.QtCore import Qt, QMimeData, QPoint
 from PyQt5.QtGui import QPixmap, QPainter, QDrag
-
+import json
+  
 
 class ClassifierSelect(QWidget):
+
     def __init__(self, stack):
         super().__init__()
-        label = QLabel("--------------------------------------------------------------------------------------------------------", self)
-        label2 = QLabel("--------------------------------------------------------------------------------------------------------", self)
-        label3 = QLabel("|", self)
-        label.adjustSize()
-        label.move(0, 50)
-        label2.move(0, 200)
-        label3.move(300, 50)
-        dropTo = self.DropZone("", self)
-        dropTo.setGeometry(300, 50, 300,150)
-        self.setAcceptDrops(True)
-        label_to_drag = self.DraggableLabel("drag this", (100, 475), self) 
-        # label_to_drag.move(40, 40)
-        hasLanded = QPushButton("Landed", self)
-        hasLanded.move(0, 475)
-        hasLanded.clicked.connect(lambda: print(label_to_drag.hasLanded))
+        f = open('Frontend/src/ClassifierPrefs.json')
+        self.params = {}
+        self.stack = stack
+        self.hps = {}
+
+        data = json.load(f)
+        self.layoutWidget= QWidget(self)
+        self.layoutWidget.setGeometry(20, 10, 551, 41)
+        self.layout = QHBoxLayout(self.layoutWidget)
+
+        self.layout.addItem(
+            QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        )
+        for clf in data.keys():
+            button = QPushButton(clf, self.layoutWidget)
+            button.clicked.connect(
+                lambda: self.clfSelect(data)
+            )
+            self.layout.addWidget(button)
+        self.layout.addItem(
+            QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        )
+
         back = QPushButton("Back", self)
         back.clicked.connect(lambda: main.transition(stack, datahandler.DataSelect(stack)))
         self.show()
-    
+
     def dragEnterEvent(self, e):
         e.accept()
 
@@ -38,16 +48,89 @@ class ClassifierSelect(QWidget):
         widget.hasLanded = False
         e.acceptProposedAction()
 
-    def initialiseClfDict(self):
-        clfDict = {}
-        clfDict["XG"] = {}
-        clfDict["Bayes"] = {}
-        clfDict["NN"] = {}
-        clfDict["clf"] = {}
-        clfDict["clf"]["C"] = ['R']
-        clfDict["clf"]["kernel"] = ['linear', 'poly', 'rbf'],
-        clfDict["clf"]["gamma"] = ['R']
-        return clfDict
+    def clfSelect(self, data):
+        self.clf = self.sender().text()
+        self.hps = data[self.clf]
+        self.layoutWidget.hide()
+
+        self.groupBox = QGroupBox(self)
+        self.groupBox.setGeometry(80, 70, 401, 221)
+        self.groupBox.setObjectName("groupBox")
+
+        self.grid = QGridLayout(self.groupBox)
+        self.grid.setObjectName("grid")
+
+        i = 0
+        varhpLabel = QLabel("Select Variable Hyperparameter", self)
+        varhpLabel.move(90, 340)
+        varhpLabel.show()
+        self.varComboBox = QComboBox(self)
+        self.varComboBox.move(90, 370)
+        for hp in self.hps.keys():
+            self.varComboBox.addItem(hp)
+            label = QLabel(hp, self.groupBox)
+            self.grid.addWidget(label, 0, i)
+            comboBox = QComboBox(self.groupBox)
+            comboBox.addItem("Default")
+            comboBox.setObjectName(hp)
+            for val in self.hps[hp]:
+                comboBox.addItem(val)
+                comboBox.last = "default"
+                comboBox.currentTextChanged.connect(self.comboChanged)
+            self.grid.addWidget(comboBox, 1, i)
+            i+=1
+        self.varComboBox.show()
+        self.groupBox.show()
+        self.selectedButton = QPushButton("Accept", self)
+        self.selectedButton.move(490, 280)
+        self.selectedButton.clicked.connect(lambda: self.modelSelected())
+        self.selectedButton.show()
+
+    
+    def comboChanged(self):
+        box = self.sender()
+        hpName = box.objectName()
+        hpVal = box.currentText()
+        self.params[hpName] = hpVal
+        child = self.findChild(QLineEdit, hpName)
+        if hpVal == "Custom" and (child is None):
+            p = box.pos() + QPoint(80, 120)
+            line = QLineEdit(self)
+            line.setPlaceholderText("Enter Value")
+            line.setObjectName(hpName)
+            line.move(p)
+            line.show()
+        elif hpVal == "Custom":
+            child.show()
+        else:
+            if box.last == "Custom":
+                child.setText("")
+                child.hide()
+            if hpVal == "Default":
+                self.params.pop(hpName)
+        box.last = hpVal
+
+    def modelSelected(self):
+        for hpName in self.params.keys():
+            if self.params[hpName].isdigit():
+                self.params[hpName] = int(self.params[hpName])
+            if self.params[hpName] == "Custom":
+                child = self.findChild(QLineEdit, hpName)
+                if child.text() == "":
+                    self.params.pop(hpName)
+                else:
+                    self.params[hpName] = float(child.text())
+        vals = self.hps[self.varComboBox.currentText()]
+        if "Custom" in vals:
+            vals.remove("Custom")
+            vals = [int(val) for val in vals]
+        preferences = {
+            "hps": self.params,
+            "clf": self.clf,
+            "var": self.varComboBox.currentText(),
+            "vals": vals
+        }
+        main.transition(self.stack, datahandler.DataViewer(self.stack, prefs=preferences))
 
 
     class DraggableLabel(QLabel):
