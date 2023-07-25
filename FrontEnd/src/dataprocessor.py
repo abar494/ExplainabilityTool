@@ -1,15 +1,9 @@
-import main
-import classifierselect
-import gallery
-from PyQt5.uic import loadUi
-from PyQt5.QtWidgets import QWidget
 import glob
 import os
 import shutil
 import numpy as np
 from scipy.io import loadmat
 from skimage.color import gray2rgb, rgb2gray
-import random
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.model_selection import train_test_split
@@ -18,50 +12,27 @@ from skimage.transform import resize
 import glob
 
 
-class DataSelect(QWidget):
-    def __init__(self, stack):
-        super(DataSelect, self).__init__()
-        loadUi('FrontEnd/UI/DataSelect.ui', self)
-        self.sampleData.clicked.connect(lambda: main.transition(stack, DataViewer(stack)))
-        self.loadData.clicked.connect(lambda: main.transition(stack, classifierselect.ClassifierSelect(stack)))
-        self.back.clicked.connect(lambda: main.transition(stack, main.MainMenu(stack)))
-        self.show()
+class DataProcessor():
+    def __init__(self, prefs):
+    
+        self.prefs = prefs
+        self.x_test, self.y_test, self.iclf, self.clfs = None, None, None, None
 
-
-class DataViewer(QWidget):
-    def __init__(self, stack, prefs=None, x_test=None, y_test=None, iclf=None, clfs=None):
-        super(DataViewer, self).__init__()
-        loadUi('FrontEnd/UI/DataViewer.ui', self)
-        self.x_test, self.y_test, self.iclf, self.clfs = x_test, y_test, iclf, clfs
-        
         self.pipelineDict = self.initialisePipelineDict()
 
-        if prefs is None:
-            self.hps = {"probability":True, "C": 3, "kernel": 'linear', "gamma": 2}
-            self.clfType = "SVM"
-            self.var = "C"
-            self.vals = [1, 3, 5, 7, 9]
-        else:
-            self.hps = prefs["hps"]
-            self.clfType = prefs["clf"]
-            self.var = prefs["var"]
-            self.vals = prefs["vals"]
+        self.hps = prefs["hps"]
+        self.hps["probability"] = True
+        self.clfType = prefs["clf"]
+        self.var = prefs["var"]
+        self.vals = prefs["vals"]
 
+        self.catClassify()
 
-        self.backButton.clicked.connect(
-            lambda: main.transition(stack, main.MainMenu(stack)))
-        self.classifyButton.clicked.connect(self.defaultClassify)
-        self.explainButton.clicked.connect(
-            lambda: main.transition(
-            stack, gallery.Gallery(stack, self.x_test, self.y_test, self.iclf, self.clfs, self.vals)))
-        self.plotButton.clicked.connect(self.catClassify)
-        
-        self.show()
 
     def enumerate(self, animal, animalList):
-        for i in range(len(animalList)):
-            if animal == animalList[i]:
-                return i
+            for i in range(len(animalList)):
+                if animal == animalList[i]:
+                    return i
 
     def catClassify(self):
         fileList = glob.glob("Datasets/catdogpanda/*")
@@ -80,18 +51,11 @@ class DataViewer(QWidget):
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(data, np.ravel(labels), train_size=0.8)
         self.classify()
 
-    def defaultClassify(self):
-        mnist = loadmat(r"Datasets/MNIST/mnist-original.mat")
-        data, labels = mnist["data"].T, mnist["label"].T
-        random.Random(6).shuffle(data)
-        random.Random(6).shuffle(labels)
-        data, labels = data[:8000], labels[:8000]
-        data = np.stack([gray2rgb(iimg)
-                         for iimg in data.reshape((-1, 28, 28))], 0).astype(np.uint8)
-        labels = labels.astype(np.uint8)
-        self.pipes = [self.pipelineDict['Make Gray'], self.pipelineDict['Flatten Step']]
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(data, np.ravel(labels), train_size=0.8)
-        self.classify()
+    def enumerate(self, animal, animalList):
+        for i in range(len(animalList)):
+            if animal == animalList[i]:
+                return i
+
 
     def classify(self):
         if len(np.unique(self.y_train)) < 2:
@@ -101,28 +65,29 @@ class DataViewer(QWidget):
         self.clfs = [None for i in range(len(self.vals))]
         self.sample(120)
         print("please wait a little while the classifier is fit to the data")
-        self.iclf = self.getPipeline(self.pipes, self.hps[self.var])
+        self.iclf = self.getPipeline(self.pipes)
         self.iclf.fit(self.x_train, self.y_train)
         print(self.iclf.score(self.x_test, self.y_test))
         self.pipes.pop()
 
         for i in range(len(self.vals)):
-            self.clfs[i] = self.getPipeline(self.pipes, self.vals[i])
+            self.hps[self.var] = self.vals[i]
+            self.clfs[i] = self.getPipeline(self.pipes)
             self.clfs[i].fit(self.x_train, self.y_train)
             print(self.clfs[i].score(self.x_test, self.y_test))
             self.pipes.pop()
         print("done")
+
 
     def initialisePipelineDict(self):
         pipelineDict = {}
         pipelineDict['Flatten Step'] = ('Flatten Step',
                         self.PipeStep(lambda img_list: [img.ravel() for img in img_list]))
         pipelineDict['Make Gray'] = ('Make Gray',
-                         self.PipeStep(lambda img_list: [rgb2gray(img) for img in img_list]))
+                            self.PipeStep(lambda img_list: [rgb2gray(img) for img in img_list]))
         return pipelineDict
-    
-    def getPipeline(self, pipes, val):
-        self.hps[self.var] = val
+
+    def getPipeline(self, pipes):
         clfPipeName = self.clfType.lower()
         constructor = globals()[self.clfType]
         clfTuple = (clfPipeName, constructor(**self.hps))
@@ -155,3 +120,17 @@ class DataViewer(QWidget):
             return self
         def transform(self,X):
             return self._step_func(X)
+        
+    
+    # def defaultClassify(self):
+    #     mnist = loadmat(r"Datasets/MNIST/mnist-original.mat")
+    #     data, labels = mnist["data"].T, mnist["label"].T
+    #     random.Random(6).shuffle(data)
+    #     random.Random(6).shuffle(labels)
+    #     data, labels = data[:8000], labels[:8000]
+    #     data = np.stack([gray2rgb(iimg)
+    #                         for iimg in data.reshape((-1, 28, 28))], 0).astype(np.uint8)
+    #     labels = labels.astype(np.uint8)
+    #     self.pipes = [self.pipelineDict['Make Gray'], self.pipelineDict['Flatten Step']]
+    #     self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(data, np.ravel(labels), train_size=0.8)
+    #     self.classify()

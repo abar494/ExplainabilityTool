@@ -1,6 +1,8 @@
-from PyQt5.QtWidgets import QWidget, QComboBox, QLineEdit, QApplication, QLabel, QPushButton, QSpacerItem, QHBoxLayout, QVBoxLayout, QSizePolicy, QGroupBox, QGridLayout
+from PyQt5.QtWidgets import QWidget, QComboBox, QLineEdit, QApplication, QLabel, \
+      QPushButton, QSpacerItem, QHBoxLayout, QSizePolicy, QGroupBox, QGridLayout
 import main
-import datahandler
+import gallery
+import dataprocessor
 from PyQt5.QtCore import Qt, QMimeData, QPoint
 from PyQt5.QtGui import QPixmap, QPainter, QDrag
 import json
@@ -34,7 +36,7 @@ class ClassifierSelect(QWidget):
         )
 
         back = QPushButton("Back", self)
-        back.clicked.connect(lambda: main.transition(stack, datahandler.DataSelect(stack)))
+        back.clicked.connect(lambda: main.transition(stack, main.MainMenu(stack)))
         self.show()
 
     def dragEnterEvent(self, e):
@@ -124,13 +126,28 @@ class ClassifierSelect(QWidget):
         if "Custom" in vals:
             vals.remove("Custom")
             vals = [int(val) for val in vals]
-        preferences = {
+        prefs = {
             "hps": self.params,
             "clf": self.clf,
             "var": self.varComboBox.currentText(),
             "vals": vals
         }
-        main.transition(self.stack, datahandler.DataViewer(self.stack, prefs=preferences))
+
+        dp = dataprocessor.DataProcessor(prefs)
+        modelData = {
+            "x_test": dp.x_test,
+            "y_test": dp.y_test,
+            "iclf": dp.iclf,
+            "clfs": dp.clfs,
+            "vals": dp.vals
+        }
+        main.transition(self.stack, gallery.Gallery(self.stack, modelData))
+
+        # main.transition(self.stack, dataprocessor.DataProcessor(self.stack, prefs))
+        
+
+
+
 
 
     class DraggableLabel(QLabel):

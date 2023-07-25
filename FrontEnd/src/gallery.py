@@ -1,30 +1,31 @@
 from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, QGroupBox, QScrollArea, QVBoxLayout
 from PyQt5.QtWidgets import QAbstractButton
 import main
-import datahandler
+import classifierselect
 import explainer
 from PyQt5.QtGui import QPixmap, QPainter
 
 
 class Gallery(QWidget):
-    def __init__(self, stack, x_test, y_test, iclf, clfs, values):
+    def __init__(self, stack, modelData):
         #Sets labels etc
         super(Gallery, self).__init__()
 
+        self.modelData = modelData
         back = QPushButton("Back", self)
         back.clicked.connect(
             lambda: main.transition(
-            stack, datahandler.DataViewer(stack, x_test, y_test, iclf, clfs, values)
+            stack, classifierselect.ClassifierSelect(stack)
             ))
         
         gridLayout = QGridLayout()
         groupBox = QGroupBox()
-        for i in range(min(len(x_test), 120)):
+        for i in range(min(len(self.modelData["x_test"]), 120)):
             button = self.PicButton(
                 QPixmap("Datasets/sampledata/" + str(i) + ".png"), i)
             button.id = i
             button.clicked.connect(
-                lambda: self.explainerTransition(stack, x_test, y_test, iclf, clfs, values))
+                lambda: self.explainerTransition(stack, self.modelData))
             gridLayout.addWidget(button, (i)//3, (i)%3)
 
         groupBox.setLayout(gridLayout)
@@ -37,10 +38,10 @@ class Gallery(QWidget):
         self.setLayout(layout)
         self.show()
 
-    def explainerTransition(self, stack, x_test, y_test, iclf, clfs, values):
+    def explainerTransition(self, stack, modelData):
         id = self.sender().id
         main.transition(
-            stack, explainer.Explainer(stack, id, x_test, y_test, iclf, clfs, values))
+            stack, explainer.Explainer(stack, id, modelData))
 
 
     class PicButton(QAbstractButton):
