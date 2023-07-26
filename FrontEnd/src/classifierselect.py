@@ -12,7 +12,7 @@ class ClassifierSelect(QWidget):
 
     def __init__(self, stack):
         super().__init__()
-        f = open('Frontend/src/ClassifierPrefs.json')
+        f = open('FrontEnd/src/ClassifierPrefs.json')
         self.params = {}
         self.stack = stack
         self.hps = {}
