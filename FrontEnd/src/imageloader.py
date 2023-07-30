@@ -5,7 +5,7 @@ from PIL import Image
 from PyQt5.QtWidgets import QFileDialog, QApplication, QWidget, QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import Qt
 from PyQt5 import uic
-from dataset import Dataset
+from dataset import Dataset, save_dataset_to_file
 
 # Temp dark stylesheet
 dark_stylesheet = """
@@ -154,7 +154,7 @@ dark_stylesheet = """
 """
 
         # border: 2px solid #00ff00;
-# 
+
 
 class ImageLoader(QWidget):
     def __init__(self):
@@ -177,7 +177,8 @@ class ImageLoader(QWidget):
         self.selectDir.clicked.connect(self.select_folder)
         self.resetData.clicked.connect(self.reset_selection)
         self.resetSpins.clicked.connect(self.reset_parameters)
-        self.back.clicked.connect(self.print_attributes)  # temp usage of back
+        # Temporary function of the BACK button prints all the class attributes. usage of back
+        self.back.clicked.connect(self.print_attributes) 
         self.maxImages.valueChanged.connect(self.update_spins)
         self.resizeX.valueChanged.connect(self.update_spins)
         self.resizeY.valueChanged.connect(self.update_spins)
@@ -191,9 +192,9 @@ class ImageLoader(QWidget):
 
     # Set attributes to their defaults
     def init_initial_values(self):
-        self.max_images_value = 0
-        self.resize_x_value = None
-        self.resize_y_value = None
+        self.max_images_value = 100
+        self.resize_x_value = 500
+        self.resize_y_value = 500
         self.image_count = 0
         self.largest_size = (0, 0)
         self.smallest_size = (0, 0)
@@ -209,7 +210,7 @@ class ImageLoader(QWidget):
 
     # Set sliders to their defaults
     def init_sliders(self):
-        self.default_train_split = self.train_test_split = 75
+        self.default_train_split = self.train_test_split = 70 # This value sets the default on the GUI
         self.trainSlider.setValue(self.default_train_split)
         self.testSlider.setValue(100 - self.default_train_split)
         # Disable Test text, spinbox, and slider. Should always be disabled.
@@ -375,7 +376,7 @@ class ImageLoader(QWidget):
         # Opens file explorer
         file_dialog = QFileDialog()
         file_dialog.setFileMode(QFileDialog.ExistingFile)
-        file_dialog.setNameFilter("All files (*.pkl *.mat)")
+        file_dialog.setNameFilter("All files (*.pkl *.mat *.joblib)")
 
         if file_dialog.exec_() == QFileDialog.Accepted:
             selected_files = file_dialog.selectedFiles()
@@ -406,17 +407,24 @@ class ImageLoader(QWidget):
         self.image_count = self.test.num_images
         self.num_classes = len(self.test.label)
         self.update_info()
-        print("Instance Attributes:")
+        # self.print_dataset_attributes(self.test)
+        # print("Instance Attributes:")
         # test.plot_image(0, 0)
-        self.resizeX.setValue(self.test.target_size[0])
-        self.resizeY.setValue(self.test.target_size[1])
+        if self.test.target_size is not None:
+            self.resizeX.setValue(self.test.target_size[0])
+            self.resizeY.setValue(self.test.target_size[1])
+        else:
+            self.resizeX.setValue(500)
+            self.resizeY.setValue(500)
         self.maxImages.setValue(self.image_count // len(self.test.label))
         # self.enable_parameter_layout(True)
         self.maxImages.setMaximum(self.image_count // len(self.test.label))
-        # self.
+
         self.enable_layout(True, self.findChild(QVBoxLayout, "infoLayout"))
 
-        for attr_name, attr_value in vars(self.test).items():
+    def print_dataset_attributes(self, dataset):
+
+        for attr_name, attr_value in vars(dataset).items():
             if (
                 not attr_name.startswith("__")
                 and not callable(attr_value)
@@ -424,6 +432,8 @@ class ImageLoader(QWidget):
             ):
                 if attr_name != "data":
                     print(f"- {attr_name}: {attr_value}")
+
+    
 
     # Update dataset info with appropriate information.
     def update_info(self):
@@ -486,16 +496,21 @@ class ImageLoader(QWidget):
     #     line_edit.textChanged.connect(self.handle_text_changed)
 
     def save_file(self):
-        test = self.test
         self.save_file_name = self.fileName.text()
         test = Dataset()
 
-        if self.file_directory != None:
-            test.load_dataset_from_dir(self.file_directory, self.max_images_value if self.max_images_value != 0 else None)
-        elif self.file_name != None:
-            test.load_dataset_from_file(self.file_name)
+        print("self.file_directory", self.file_directory)
+        print("self.folder_directory", self.folder_directory)
 
-        test.save_dataset_to_file(os.getcwd(),self.save_file_name)
+        # Directory to load from, pass max number of images if not 0, resize X,Y values, and train/test split size
+        test.load_dataset_from_dir(self.folder_directory, self.max_images_value if self.max_images_value != 0 else None, (self.resize_x_value, self.resize_y_value) if self.resize_x_value and self.resize_y_value != 0 else None, self.train_test_split)
+        # elif self.file_name != None:
+        #     test.load_dataset_from_file(self.file_name)
+
+        # # Directory to save to(TODO: Change later), and file name to save as.
+        # print("Printing attributes of dataset")
+        # self.print_dataset_attributes(test)
+        save_dataset_to_file("Datasets/pickled",self.save_file_name,test)
         
 
     # Debugging method
