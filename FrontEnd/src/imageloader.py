@@ -177,7 +177,7 @@ class ImageLoader(QWidget):
         self.selectDir.clicked.connect(self.select_folder)
         self.resetData.clicked.connect(self.reset_selection)
         self.resetSpins.clicked.connect(self.reset_parameters)
-        # Temporary function of the BACK button prints all the class attributes. usage of back
+        # Temporary function of the BACK button prints all the class attributes.
         self.back.clicked.connect(self.print_attributes) 
         self.maxImages.valueChanged.connect(self.update_spins)
         self.resizeX.valueChanged.connect(self.update_spins)
@@ -397,6 +397,7 @@ class ImageLoader(QWidget):
                 # if a file has been selected, enable use of spinboxes etc
                 self.enable_parameter_layout(True)
                 self.get_file_info()
+                self.test.print_dataset_distribution()
 
     # TODO: Implement function to display information about the selected file
     # - Include .mat handling.

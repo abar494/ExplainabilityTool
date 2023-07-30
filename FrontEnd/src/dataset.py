@@ -158,6 +158,26 @@ class Dataset:
         except Exception as e:
                 print(f"Error while saving {file_name}.pkl: {e}")
 
+    # returns the split dataset in a list
+    def get_train_test_split(self):
+        return [self.x_train, self.y_train, self.x_test, self.y_test]    
+
+    def print_dataset_distribution(self):
+         # Calculate the class distribution in the train dataset
+        unique_classes_train, train_class_counts = np.unique(self.y_train, return_counts=True)
+
+        # Calculate the class distribution in the test dataset
+        unique_classes_test, test_class_counts = np.unique(self.y_test, return_counts=True)
+
+        print("Train Dataset Class Distribution:")
+        for cls, count in zip(unique_classes_train, train_class_counts):
+            print(f"Class: {cls}, Count: {count}")
+
+        print("\nTest Dataset Class Distribution:")
+        for cls, count in zip(unique_classes_test, test_class_counts):
+            print(f"Class: {cls}, Count: {count}")
+
+
 # Saves the entire Dataset object to a .joblib file
 def save_dataset_to_file(file_dir, file_name="dataset", dataset=None):
     # Open a file in binary mode
