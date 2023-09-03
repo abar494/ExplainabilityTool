@@ -2,6 +2,7 @@ import os
 import shutil
 import sys
 import classifierselect
+import imageloader
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QHBoxLayout, QFormLayout, \
@@ -53,8 +54,14 @@ class MainMenu(QMainWindow):
         gl.addItem(si, 1, 0, 1, 1)
         self.setCentralWidget(cw)
 
+
+        self.sizebutton = QPushButton("Print Window Size", self)
+        self.sizebutton.clicked.connect(self.print_size)
+
         trainCLF.clicked.connect(
             lambda: transition(stack, classifierselect.ClassifierSelect(stack)))
+        defaultCLF.clicked.connect(
+            lambda: transition(stack, imageloader.ImageLoader(stack)))
         exit.clicked.connect(
             self.close_app)
         
@@ -68,6 +75,11 @@ class MainMenu(QMainWindow):
         else:                               QMessageBox.Close
 
 
+    def print_size(self):
+        # Get the current window size
+        window_size = self.size()
+        print("Window size:", window_size.width(), "x", window_size.height())
+
 if __name__ == "__main__":
     if not os.path.isdir("Datasets/sampledata"):
         os.mkdir("Datasets/sampledata")
@@ -75,8 +87,9 @@ if __name__ == "__main__":
     widget = QStackedWidget()
     mainMenu = MainMenu(widget)
     widget.addWidget(mainMenu)
-    widget.setFixedHeight(500)
-    widget.setFixedWidth(600)
+    widget.resize(733, 464)
+    # widget.setFixedHeight(500)
+    # widget.setFixedWidth(600)
     widget.show()
     ret = app.exec_()
     shutil.rmtree('Datasets/sampledata')

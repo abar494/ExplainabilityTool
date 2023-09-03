@@ -1,9 +1,30 @@
 {
-    "Bayes": {},
-    "NN": {},
-    "SVC": {
-        "C": ["1", "2", "3", "5", "Custom"],
-        "kernel": ["linear", "poly", "rbf"],
-        "gamma": ["1", "2", "3", "4", "5", "Custom"]
+    "Naive Bayes": {
+        "call": "GaussianNB",
+        "hps": {
+            "A": ["a", "b", "c", "d", "e"],
+            "B": ["1", "2", "3", "4", "5"],
+            "C": ["2", "4", "6", "8", "10"]
+        }
+    },
+    "Neural Network": {
+        "call": "MLPClassifier",
+        "hps": {}
+    },
+    "Support Vector Machine": {
+        "call": "SVC",
+        "hps": {
+            "C": ["1", "2", "3", "5", "Custom"],
+            "kernel": ["linear", "poly", "rbf"],
+            "gamma": ["1", "2", "3", "4", "5", "Custom"]
+        }
+    },
+    "Decision Tree": {
+        "call": "DecisionTreeClassifier",
+        "hps": {}
+    },
+    "Random Forest": {
+        "call": "RandomForestClassifier",
+        "hps": {}
     }
 }
