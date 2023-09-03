@@ -149,7 +149,7 @@ class ClassifierSelect(QWidget):
         self.accept = QPushButton("Accept", self)
         self.accept.setGeometry(580, 400, 132, 32)
         self.accept.clicked.connect(lambda: self.modelSelected())
-        self.accept.show()
+        self.accept.hide()
 
         #Add back button
         back = QPushButton("Back", self)

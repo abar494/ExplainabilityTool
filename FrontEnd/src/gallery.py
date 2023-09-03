@@ -1,15 +1,17 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, QGroupBox, QScrollArea, QVBoxLayout
-from PyQt5.QtWidgets import QAbstractButton
+from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, QGroupBox, QScrollArea, \
+QAbstractButton, QVBoxLayout, QLabel
 import main
 import classifierselect
 import explainer
-from PyQt5.QtGui import QPixmap, QPainter
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap, QPainter, QFont
 
 
 class Gallery(QWidget):
     def __init__(self, stack, modelData):
         #Sets labels etc
         super(Gallery, self).__init__()
+
 
         self.modelData = modelData
         back = QPushButton("Back", self)
@@ -36,6 +38,26 @@ class Gallery(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(scroll)
         self.setLayout(layout)
+
+
+        self.title = QLabel("Gallery", self)
+        self.title.setGeometry(460, 90, 181, 61)
+        font = QFont()
+        font.setPointSize(50)
+        font.setBold(True)
+        self.title.setFont(font)
+
+
+        self.description = QLabel("Choose an Image to test the model on!", self)
+        self.description.setGeometry(410, 220, 271, 111)
+        font = QFont()
+        font.setPointSize(30)
+        self.description.setFont(font)
+        self.description.setAlignment(Qt.AlignCenter)
+        self.description.setWordWrap(True)
+
+
+
         self.show()
 
     def explainerTransition(self, stack, modelData):

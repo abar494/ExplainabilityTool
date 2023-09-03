@@ -157,7 +157,7 @@ dark_stylesheet = """
 
 
 class ImageLoader(QWidget):
-    def __init__(self):
+    def __init__(self, stack):
         super().__init__()
         uic.loadUi("FrontEnd/UI/ImageLoader.ui", self)
         

@@ -21,48 +21,46 @@ class MainMenu(QMainWindow):
         # Sets labels etc
         super(MainMenu, self).__init__()
 
-        cw = QWidget(self)
-        gl = QGridLayout(cw)
-        hl = QHBoxLayout()
-        si = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        hl.addItem(si)
-        fl = QFormLayout()
-        defaultCLF = QPushButton("Use a default classifier", cw)
-        fl.setWidget(2, QFormLayout.FieldRole, defaultCLF)
-        # loadCLF = QPushButton("Load a classifier", cw)
-        # fl.setWidget(3, QFormLayout.FieldRole, loadCLF)
-        trainCLF = QPushButton("Train a new classifier", cw)
-        fl.setWidget(3, QFormLayout.FieldRole, trainCLF)
-        exit = QPushButton("Exit", cw)
-        fl.setWidget(5, QFormLayout.FieldRole, exit)
-        title = QLabel("P4P XAI Tool", cw)
+
+        #Title
+        self.title = QLabel("ML-XplainEd", self)
+        self.title.setGeometry(225, 40, 301, 61)
         font = QFont()
-        font.setFamily("Comic Sans MS")
-        font.setPointSize(40)
-        title.setFont(font)
-        title.setAlignment(Qt.AlignCenter)
-        fl.setWidget(0, QFormLayout.FieldRole, title)
-        si = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Minimum)
-        fl.setItem(1, QFormLayout.FieldRole, si)
-        hl.addLayout(fl)
-        si = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
-        hl.addItem(si)
-        gl.addLayout(hl, 2, 0, 1, 1)
-        si = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
-        gl.addItem(si, 5, 0, 1, 1)
-        si = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Minimum)
-        gl.addItem(si, 1, 0, 1, 1)
-        self.setCentralWidget(cw)
+        font.setPointSize(50)
+        font.setBold(True)
+        self.title.setFont(font)
 
+        #Description
+        self.description = QLabel("An interactive tool designed to aid you in learning " + \
+            "key machine learning concepts!", self)
+        self.description.setGeometry(130, 130, 461, 71)
+        font = QFont()
+        font.setPointSize(22)
+        font.setBold(False)
+        self.description.setFont(font)
+        self.description.setAlignment(Qt.AlignCenter)
+        self.description.setWordWrap(True)
 
-        self.sizebutton = QPushButton("Print Window Size", self)
-        self.sizebutton.clicked.connect(self.print_size)
+        font = QFont()
+        font.setPointSize(16)
 
-        trainCLF.clicked.connect(
+        self.builtIn = QPushButton("Built-in Models", self)
+        self.builtIn.setGeometry(295, 230, 131, 32)
+        self.builtIn.setFont(font)
+
+        self.build = QPushButton("Create a Model", self)
+        self.build.setGeometry(295, 280, 131, 32)
+        self.build.setFont(font)
+        
+        self.exit = QPushButton("Exit", self)
+        self.exit.setGeometry(295, 330, 131, 32)
+        self.exit.setFont(font)
+
+        self.build.clicked.connect(
             lambda: transition(stack, classifierselect.ClassifierSelect(stack)))
-        defaultCLF.clicked.connect(
+        self.builtIn.clicked.connect(
             lambda: transition(stack, imageloader.ImageLoader(stack)))
-        exit.clicked.connect(
+        self.exit.clicked.connect(
             self.close_app)
         
         self.show()
