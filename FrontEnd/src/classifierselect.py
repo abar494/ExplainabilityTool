@@ -240,6 +240,7 @@ class ClassifierSelect(QWidget):
             "y_test": dp.y_test,
             "iclf": dp.iclf,
             "clfs": dp.clfs,
-            "vals": dp.vals
+            "vals": dp.vals,
+            "var": dp.var
         }
         main.transition(self.stack, gallery.Gallery(self.stack, modelData))

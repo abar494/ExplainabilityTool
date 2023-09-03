@@ -1,9 +1,8 @@
 import main
 import gallery
-from PyQt5.QtWidgets import QWidget, QPushButton, QStyle, QSlider, QStyleOptionSlider, \
-    QVBoxLayout, QHBoxLayout
-from PyQt5.QtGui import QPainter
-from PyQt5.QtCore import Qt, QPoint, QRect
+from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, \
+    QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QRadioButton
+from PyQt5.QtGui import QFont, QPixmap
 import matplotlib.pyplot as plt
 from lime import lime_image
 from lime.wrappers.scikit_image import SegmentationAlgorithm
@@ -15,19 +14,85 @@ class Explainer(QWidget):
 
         x_test, y_test, iclf, clfs = modelData["x_test"], modelData["y_test"], modelData["iclf"], modelData["clfs"] 
         back = QPushButton("Back", self)
-        self.hpSlider = self.LabeledSlider(minimax=(0, len(modelData["vals"])-1), labels=modelData["vals"], parent=self)
+        # self.hpSlider = self.LabeledSlider(minimax=(0, len(modelData["vals"])-1), labels=modelData["vals"], parent=self)
         self.go = QPushButton("Go", self)
-        self.go.setGeometry(380, 200, 100, 32)
-        self.hpSlider.move(30, 60)
+        self.go.setGeometry(580, 400, 132, 32)
+        self.go.hide()
+        # self.hpSlider.move(30, 60)
+
+        self.varLabel = QLabel("Variable " + modelData["var"] + " values:", self)
+        font = QFont()
+        font.setPointSize(15)
+        self.varLabel.setGeometry(30, 310, 130, 61)
+        self.varLabel.setWordWrap(True)
+        self.varLabel.setFont(font)
+
+        self.sliderLayout = QWidget(self)
+        self.sliderLayout.setGeometry(140, 310, 421, 62)
+        self.sliderLayout.setObjectName("sliderLayout")
+        self.sliderBox = QHBoxLayout(self.sliderLayout)
+        self.sliderBox.setContentsMargins(0, 0, 0, 0)
+        self.sliderBox.setObjectName("sliderBox")
+
+        self.currentClf = None
+        #Iter 1:
+        i = 0
+        for val in modelData["vals"]:
+            self.Vbox = QVBoxLayout()
+            self.Vbox.setObjectName("Vbox")
+
+            Hbox = QHBoxLayout()
+            spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            Hbox.addItem(spacerItem)
+            self.hpValue = QLabel(self.sliderLayout)
+            self.hpValue.setObjectName("Name: " + str(i))
+            self.hpValue.setText(str(val))
+            Hbox.addWidget(self.hpValue)
+            spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            Hbox.addItem(spacerItem)
+            self.Vbox.addLayout(Hbox)
+
+            Hbox = QHBoxLayout()
+            spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            Hbox.addItem(spacerItem)
+            self.valButton = QRadioButton(self.sliderLayout)
+            self.valButton.setText("")
+            self.valButton.setObjectName("Button: " + str(i))
+            self.valButton.clicked.connect(lambda: self.setCurrentClf())
+
+            Hbox.addWidget(self.valButton)
+            spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            Hbox.addItem(spacerItem)
+            self.Vbox.addLayout(Hbox)
+
+            self.sliderBox.addLayout(self.Vbox)
+            i += 1
+
+
+        self.title = QLabel("Predict and Explain", self)
+        self.title.setGeometry(150, 20, 451, 61)
+        font = QFont()
+        font.setPointSize(50)
+        font.setBold(True)
+        self.title.setFont(font)
+
+        pixmap = QPixmap("Datasets/sampledata/" + str(id) + ".png")
+        pixmap = pixmap.scaled(210, 210)
+        self.image = QLabel(self)
+        self.image.move(250, 85)
+        self.image.setPixmap(pixmap)
+
 
         back.clicked.connect(lambda: main.transition(stack, gallery.Gallery(stack, modelData)))
-        self.go.clicked.connect(lambda: self.printThenExplain(id, x_test, y_test, iclf, clfs))
+        self.go.clicked.connect(lambda: self.explain(id, x_test, y_test, iclf, clfs[self.currentClf]))
         self.show()
     
-    def printThenExplain(self, id, x_test, y_test, iclf, clfs):
-
-        # self.explain(id, x_test, y_test, clfs[self.slider1.value()][self.slider2.value()][self.slider3.value()])
-        self.explain(id, x_test, y_test, iclf, clfs[self.hpSlider.sl.value()])
+    def setCurrentClf(self):
+        valObjectName = self.sender().objectName()
+        valObjectId = int(valObjectName.split(" ")[1])
+        self.currentClf = valObjectId
+        print(self.currentClf)
+        self.go.show()
 
     def explain(self, id, x_test, y_test, iclf, vclf):
         explainer = lime_image.LimeImageExplainer(verbose = False)
@@ -54,113 +119,3 @@ class Explainer(QWidget):
         ax2.axis('off')
         plt.show()
     
-    class LabeledSlider(QWidget):
-        def __init__(self, minimax, interval=1, orientation=Qt.Vertical,
-                labels=None, p0=0, parent=None):
-            super(Explainer.LabeledSlider, self).__init__(parent=parent)
-
-            levels=range(minimax[0], minimax[1] + interval, interval)
-
-            if labels is not None:
-                if not isinstance(labels, (tuple, list)):
-                    raise Exception("<labels> is a list or tuple.")
-                if len(labels) != len(levels):
-                    raise Exception("Size of <labels> doesn't match levels.")
-                self.levels=list(zip(levels,labels))
-            else:
-                self.levels=list(zip(levels,map(str,levels)))
-
-            if orientation==Qt.Horizontal:
-                self.layout=QVBoxLayout(self)
-            elif orientation==Qt.Vertical:
-                self.layout=QHBoxLayout(self)
-            else:
-                raise Exception("<orientation> wrong.")
-
-            # gives some space to print labels
-            self.left_margin=10
-            self.top_margin=10
-            self.right_margin=10
-            self.bottom_margin=10
-
-            self.layout.setContentsMargins(self.left_margin,self.top_margin,
-                    self.right_margin,self.bottom_margin)
-
-            self.sl=QSlider(orientation, self)
-            self.sl.setMinimum(minimax[0])
-            self.sl.setMaximum(minimax[1])
-            self.sl.setValue(minimax[0])
-            self.sl.setSliderPosition(p0)
-            if orientation==Qt.Horizontal:
-                self.sl.setTickPosition(QSlider.TicksBelow)
-                self.sl.setMinimumWidth(300) # just to make it easier to read
-            else:
-                self.sl.setTickPosition(QSlider.TicksLeft)
-                self.sl.setMinimumHeight(300) # just to make it easier to read
-            self.sl.setTickInterval(interval)
-            self.sl.setSingleStep(1)
-
-            self.layout.addWidget(self.sl)
-
-        def paintEvent(self, e):
-
-            super(Explainer.LabeledSlider,self).paintEvent(e)
-            style=self.sl.style()
-            painter=QPainter(self)
-            st_slider=QStyleOptionSlider()
-            st_slider.initFrom(self.sl)
-            st_slider.orientation=self.sl.orientation()
-
-            length=style.pixelMetric(QStyle.PM_SliderLength, st_slider, self.sl)
-            available=style.pixelMetric(QStyle.PM_SliderSpaceAvailable, st_slider, self.sl)
-
-            for v, v_str in self.levels:
-
-                # get the size of the label
-                rect=painter.drawText(QRect(), Qt.TextDontPrint, str(v_str))
-
-                if self.sl.orientation()==Qt.Horizontal:
-                    # I assume the offset is half the length of slider, therefore
-                    # + length//2
-                    x_loc=QStyle.sliderPositionFromValue(self.sl.minimum(),
-                            self.sl.maximum(), v, available)+length//2
-
-                    # left bound of the text = center - half of text width + L_margin
-                    left=x_loc-rect.width()//2+self.left_margin
-                    bottom=self.rect().bottom()
-
-                    # enlarge margins if clipping
-                    if v==self.sl.minimum():
-                        if left<=0:
-                            self.left_margin=rect.width()//2-x_loc
-                        if self.bottom_margin<=rect.height():
-                            self.bottom_margin=rect.height()
-
-                        self.layout.setContentsMargins(self.left_margin,
-                                self.top_margin, self.right_margin,
-                                self.bottom_margin)
-
-                    if v==self.sl.maximum() and rect.width()//2>=self.right_margin:
-                        self.right_margin=rect.width()//2
-                        self.layout.setContentsMargins(self.left_margin,
-                                self.top_margin, self.right_margin,
-                                self.bottom_margin)
-
-                else:
-                    y_loc=QStyle.sliderPositionFromValue(self.sl.minimum(),
-                            self.sl.maximum(), v, available, upsideDown=True)
-
-                    bottom=y_loc+length//2+rect.height()//2+self.top_margin-3
-                    # there is a 3 px offset that I can't attribute to any metric
-
-                    left=self.left_margin-rect.width()
-                    if left<=0:
-                        self.left_margin=rect.width()+2
-                        self.layout.setContentsMargins(self.left_margin,
-                                self.top_margin, self.right_margin,
-                                self.bottom_margin)
-
-                pos=QPoint(left, bottom)
-                painter.drawText(pos, str(v_str))
-
-            return

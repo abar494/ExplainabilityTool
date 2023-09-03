@@ -5,8 +5,8 @@ import classifierselect
 import imageloader
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QHBoxLayout, QFormLayout, \
-    QPushButton, QLabel, QSpacerItem, QSizePolicy, QMainWindow, QStackedWidget, QMessageBox
+from PyQt5.QtWidgets import QApplication, QPushButton, QLabel, QMainWindow, \
+    QStackedWidget, QMessageBox
 
 
 def transition(stack, context):
@@ -51,7 +51,7 @@ class MainMenu(QMainWindow):
         self.build = QPushButton("Create a Model", self)
         self.build.setGeometry(295, 280, 131, 32)
         self.build.setFont(font)
-        
+
         self.exit = QPushButton("Exit", self)
         self.exit.setGeometry(295, 330, 131, 32)
         self.exit.setFont(font)
