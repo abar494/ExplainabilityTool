@@ -13,11 +13,14 @@ import glob
 
 
 class DataProcessor():
-    def __init__(self, prefs):
+    def __init__(self, prefs, data_dict):
     
         self.prefs = prefs
-        self.x_test, self.y_test, self.iclf, self.clfs = None, None, None, None
+        self.iclf, self.clfs = None, None
+        self.x_train, self.x_test = data_dict["x_train"], data_dict["x_test"]
+        self.y_train, self.y_test = data_dict["y_train"], data_dict["y_test"] 
 
+        
         self.pipelineDict = self.initialisePipelineDict()
 
         self.hps = prefs["hps"]
@@ -26,7 +29,8 @@ class DataProcessor():
         self.var = prefs["var"]
         self.vals = prefs["vals"]
 
-        self.catClassify()
+        # self.catClassify()
+        self.classify()
 
 
     def enumerate(self, animal, animalList):
@@ -56,11 +60,15 @@ class DataProcessor():
             if animal == animalList[i]:
                 return i
 
+    
+
 
     def classify(self):
         if len(np.unique(self.y_train)) < 2:
             print("There needs to be at least two classes in the target set")
             return
+
+        self.pipes = [self.pipelineDict['Flatten Step']]
 
         self.clfs = [None for i in range(len(self.vals))]
         self.sample(120)

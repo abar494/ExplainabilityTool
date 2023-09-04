@@ -2,7 +2,7 @@ import os
 import shutil
 import sys
 import classifierselect
-import imageloader
+import imageloader_v3 as imageloader
 from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QPushButton, QLabel, QMainWindow, \
@@ -57,7 +57,8 @@ class MainMenu(QMainWindow):
         self.exit.setFont(font)
 
         self.build.clicked.connect(
-            lambda: transition(stack, classifierselect.ClassifierSelect(stack)))
+            # lambda: transition(stack, classifierselect.ClassifierSelect(stack)))
+            lambda: transition(stack, imageloader.ImageLoader(stack)))
         self.builtIn.clicked.connect(
             lambda: transition(stack, imageloader.ImageLoader(stack)))
         self.exit.clicked.connect(

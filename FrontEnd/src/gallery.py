@@ -1,5 +1,5 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, QGroupBox, QScrollArea, \
-QAbstractButton, QVBoxLayout, QLabel
+from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, QGroupBox, QScrollArea, QVBoxLayout
+from PyQt5.QtWidgets import QAbstractButton, QLabel
 import main
 import classifierselect
 import explainer
@@ -8,16 +8,17 @@ from PyQt5.QtGui import QPixmap, QPainter, QFont
 
 
 class Gallery(QWidget):
-    def __init__(self, stack, modelData):
+    def __init__(self, stack, modelData, data_dict):
         #Sets labels etc
         super(Gallery, self).__init__()
 
+        print(data_dict["x_test"].shape)
 
         self.modelData = modelData
         back = QPushButton("Back", self)
         back.clicked.connect(
             lambda: main.transition(
-            stack, classifierselect.ClassifierSelect(stack)
+            stack, classifierselect.ClassifierSelect(stack), data_dict=None
             ))
         
         gridLayout = QGridLayout()
