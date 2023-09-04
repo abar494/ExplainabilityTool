@@ -10,7 +10,7 @@ from sklearn.model_selection import train_test_split
 from PIL import Image
 from skimage.transform import resize
 import glob
-
+# fromimport stack as npstack
 
 class DataProcessor():
     def __init__(self, prefs):
@@ -35,7 +35,7 @@ class DataProcessor():
                     return i
 
     def catClassify(self):
-        fileList = glob.glob("Datasets/catdogpanda/*")
+        fileList = glob.glob("Datasets/animals/cat/*")
         fileList = fileList[:100]       
         x, labels = [], []
 

@@ -6,6 +6,7 @@ from PyQt5.QtGui import QFont
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QWidget, QGridLayout, QHBoxLayout, QFormLayout, \
     QPushButton, QLabel, QSpacerItem, QSizePolicy, QMainWindow, QStackedWidget, QMessageBox
+from imageloader_v2 import ImageLoader as img_loader
 
 
 def transition(stack, context):
@@ -54,7 +55,8 @@ class MainMenu(QMainWindow):
         self.setCentralWidget(cw)
 
         trainCLF.clicked.connect(
-            lambda: transition(stack, classifierselect.ClassifierSelect(stack)))
+            # lambda: transition(stack, classifierselect.ClassifierSelect(stack)))
+            lambda: transition(stack, img_loader(stack)))
         exit.clicked.connect(
             self.close_app)
         

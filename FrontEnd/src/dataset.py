@@ -153,10 +153,10 @@ class Dataset:
                         # pickle.dump(dataset, file)
                         joblib.dump(train_test, file)
 
-                print(f"File {file_name} saved to directory: {str(file_dir+file_name+'.pkl')} ")
+                print(f"File {file_name} saved to directory: {str(file_dir+file_name+'.joblib')} ")
 
         except Exception as e:
-                print(f"Error while saving {file_name}.pkl: {e}")
+                print(f"Error while saving {file_name}.joblib: {e}")
 
     # returns the split dataset in a list
     def get_train_test_split(self):

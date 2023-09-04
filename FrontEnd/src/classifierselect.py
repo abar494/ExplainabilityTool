@@ -6,7 +6,8 @@ import dataprocessor
 from PyQt5.QtCore import Qt, QMimeData, QPoint
 from PyQt5.QtGui import QPixmap, QPainter, QDrag
 import json
-  
+import imageloader_v2 as img_loader
+
 
 class ClassifierSelect(QWidget):
 
@@ -16,6 +17,7 @@ class ClassifierSelect(QWidget):
         self.params = {}
         self.stack = stack
         self.hps = {}
+        self.data = None
 
         data = json.load(f)
         self.layoutWidget= QWidget(self)
@@ -36,7 +38,7 @@ class ClassifierSelect(QWidget):
         )
 
         back = QPushButton("Back", self)
-        back.clicked.connect(lambda: main.transition(stack, main.MainMenu(stack)))
+        back.clicked.connect(lambda: main.transition(stack, main.img_loader(stack)))
         self.show()
 
     def dragEnterEvent(self, e):
@@ -114,7 +116,7 @@ class ClassifierSelect(QWidget):
 
     def modelSelected(self):
         for hpName in self.params.keys():
-            if self.params[hpName].isdigit():
+            if str(self.params[hpName]).isdigit():
                 self.params[hpName] = int(self.params[hpName])
             if self.params[hpName] == "Custom":
                 child = self.findChild(QLineEdit, hpName)
@@ -141,7 +143,7 @@ class ClassifierSelect(QWidget):
             "clfs": dp.clfs,
             "vals": dp.vals
         }
-        main.transition(self.stack, gallery.Gallery(self.stack, modelData))
+        main.transition(self.stack, gallery.Gallery(self.stack, modelData, self.data))
 
         # main.transition(self.stack, dataprocessor.DataProcessor(self.stack, prefs))
         

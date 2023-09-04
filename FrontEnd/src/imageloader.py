@@ -388,7 +388,6 @@ class ImageLoader(QWidget):
                 self.file_name = file_name
                 self.dataFile.setText("Selected File: " + self.file_name)
                 self.dataFile.setToolTip("File Directory: " + str(self.file_directory))
-
                 self.selectDir.setEnabled(False)  # Select Folder button
                 self.dataDir.setText("")  # Remove text
                 self.confirmSelection.setEnabled(True)
@@ -433,8 +432,6 @@ class ImageLoader(QWidget):
             ):
                 if attr_name != "data":
                     print(f"- {attr_name}: {attr_value}")
-
-    
 
     # Update dataset info with appropriate information.
     def update_info(self):
@@ -511,8 +508,9 @@ class ImageLoader(QWidget):
         # # Directory to save to(TODO: Change later), and file name to save as.
         # print("Printing attributes of dataset")
         # self.print_dataset_attributes(test)
-        save_dataset_to_file("Datasets/pickled",self.save_file_name,test)
-        
+        # save_dataset_to_file("Datasets/pickled",self.save_file_name,test)
+        test.save_train_test_split("Datasets/pickled",self.save_file_name)
+
 
     # Debugging method
     def print_attributes(self):

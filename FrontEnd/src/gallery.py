@@ -7,7 +7,7 @@ from PyQt5.QtGui import QPixmap, QPainter
 
 
 class Gallery(QWidget):
-    def __init__(self, stack, modelData):
+    def __init__(self, stack, modelData, data):
         #Sets labels etc
         super(Gallery, self).__init__()
 
