@@ -13,26 +13,40 @@ import glob
 
 
 class DataProcessor():
-    def __init__(self, prefs):
+    def __init__(self, prefs, modelData=None):
     
         self.prefs = prefs
         self.x_test, self.y_test, self.iclf, self.clfs = None, None, None, None
 
         self.pipelineDict = self.initialisePipelineDict()
-
+        self.pipes = [self.pipelineDict['Flatten Step']]
         self.hps = prefs["hps"]
         self.hps["probability"] = True
         self.clfType = prefs["clf"]
         self.var = prefs["var"]
         self.vals = prefs["vals"]
+        if modelData is None:
+            self.catClassify()
+        else:
+            self.x_train, self.x_test, self.y_train, self.y_test = modelData["x_train"], \
+                  modelData["x_test"], modelData["y_train"], modelData["y_test"] 
+            self.enumerate()
+            self.classify()
 
-        self.catClassify()
+    def enumerate(self):
+        self.classBank = {}
+        classId = 0
+        for i in range(len(self.y_train)):
+            if self.y_train[i] not in self.classBank.keys():
+                self.classBank[self.y_train[i]] = classId
+                classId += 1
+            self.y_train[i] = self.classBank[self.y_train[i]]
+        for i in range(len(self.y_test)):
+            if self.y_test[i] not in self.classBank.keys():
+                self.classBank[self.y_test[i]] = classId
+                classId += 1
+            self.y_test[i] = self.classBank[self.y_test[i]]
 
-
-    def enumerate(self, animal, animalList):
-            for i in range(len(animalList)):
-                if animal == animalList[i]:
-                    return i
 
     def catClassify(self):
         fileList = glob.glob("Datasets/catdogpanda/*")
@@ -45,17 +59,11 @@ class DataProcessor():
                 img = gray2rgb(img)
             x.append(img)
             animal = fname.split("_")[0].split("/")[-1]
-            labels.append(self.enumerate(animal, ['cats', 'dogs', 'panda']))
+            labels.append(animal)
         data = (255*np.stack(x)).astype(np.uint8)
-        self.pipes = [self.pipelineDict['Flatten Step']]
         self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(data, np.ravel(labels), train_size=0.8)
+        self.enumerate()
         self.classify()
-
-    def enumerate(self, animal, animalList):
-        for i in range(len(animalList)):
-            if animal == animalList[i]:
-                return i
-
 
     def classify(self):
         if len(np.unique(self.y_train)) < 2:

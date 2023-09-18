@@ -23,8 +23,10 @@ class Gallery(QWidget):
         gridLayout = QGridLayout()
         groupBox = QGroupBox()
         for i in range(min(len(self.modelData["x_test"]), 120)):
+            pixmap = QPixmap("Datasets/sampledata/" + str(i) + ".png")
+            pixmap = pixmap.scaled(210, 210)
             button = self.PicButton(
-                QPixmap("Datasets/sampledata/" + str(i) + ".png"), i)
+                pixmap, i)
             button.id = i
             button.clicked.connect(
                 lambda: self.explainerTransition(stack, self.modelData))

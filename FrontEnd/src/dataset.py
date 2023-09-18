@@ -91,22 +91,18 @@ class Dataset:
             # Add the images for the current class to the dataset
             dataset.extend(images)
 
-        # Convert the dataset and labels to numpy arrays
-        dataset_array = np.array(dataset)
-        class_labels_array = np.array(class_labels)
-
         
         self.root = root_dir
         self.limit = limit
         self.target_size = target_size
         self.num_images = num_loaded_images
         self.train_test_split = train_test_split
-        self.data = dataset_array
-        self.label = np.array(class_labels_array)
+        self.data = np.array(dataset)
+        self.label = np.array(class_labels)
         test_size = (100-self.train_test_split)/100 
         self.x_train, self.x_test, self.y_train , self.y_test = train_test_split_sklearn(self.data, self.label, test_size=test_size)  
 
-        return dataset_array, class_labels_array
+        return self.x_train, self.x_test, self.y_train , self.y_test
 
     # TODO: Implement .mat handling
     def load_dataset_from_file(self, file_dir):

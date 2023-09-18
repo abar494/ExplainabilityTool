@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt  # Plotting Images
 from PIL import Image
 from PyQt5.QtWidgets import QFileDialog, QApplication, QWidget, QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import Qt
+import main
+import classifierselect
 from PyQt5 import uic
 from dataset import Dataset, save_dataset_to_file
 
@@ -157,9 +159,11 @@ dark_stylesheet = """
 
 
 class ImageLoader(QWidget):
-    def __init__(self, stack):
+    def __init__(self, stack=None):
         super().__init__()
         uic.loadUi("FrontEnd/UI/ImageLoader.ui", self)
+        
+        self.stack = stack
         
         self.init_button_connects()
         self.init_initial_values()
@@ -504,14 +508,33 @@ class ImageLoader(QWidget):
         print("self.folder_directory", self.folder_directory)
 
         # Directory to load from, pass max number of images if not 0, resize X,Y values, and train/test split size
-        test.load_dataset_from_dir(self.folder_directory, self.max_images_value if self.max_images_value != 0 else None, (self.resize_x_value, self.resize_y_value) if self.resize_x_value and self.resize_y_value != 0 else None, self.train_test_split)
+        dir = self.folder_directory
+        if self.max_images_value != 0:
+            maxImg = self.max_images_value
+        else:
+            maxImg = None
+        if self.resize_x_value != 0 and self.resize_y_value != 0:
+            resize = (self.resize_x_value, self.resize_y_value)
+        else:
+            resize = None
+        split = self.train_test_split
+        x_train, x_test, y_train, y_test = test.load_dataset_from_dir(dir, maxImg, resize, split)
+        modelData = {
+            "x_train": x_train,
+            "x_test": x_test,
+            "y_train": y_train,
+            "y_test": y_test,
+        }
+        main.transition(self.stack, classifierselect.ClassifierSelect(self.stack, modelData))
+        # test.load_dataset_from_dir(self.folder_directory, self.max_images_value if self.max_images_value != 0 else None, (self.resize_x_value, self.resize_y_value) if self.resize_x_value and self.resize_y_value != 0 else None, self.train_test_split)
         # elif self.file_name != None:
         #     test.load_dataset_from_file(self.file_name)
 
         # # Directory to save to(TODO: Change later), and file name to save as.
         # print("Printing attributes of dataset")
         # self.print_dataset_attributes(test)
-        save_dataset_to_file("Datasets/pickled",self.save_file_name,test)
+
+        # save_dataset_to_file("Datasets/pickled",self.save_file_name,test)
         
 
     # Debugging method
