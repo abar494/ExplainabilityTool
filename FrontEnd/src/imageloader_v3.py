@@ -13,7 +13,7 @@ from sklearn.model_selection import train_test_split as train_test_split_sklearn
 # from dataset import Dataset, save_dataset_to_file
 
 class ImageLoader(QWidget):
-    def __init__(self, stack): # TODO: Add stack here later
+    def __init__(self, stack):
         super().__init__()
         uic.loadUi("FrontEnd/UI/ImageLoader_v3.ui", self)
         self.default_split = 60 # This is the default split for the train/test sliders
@@ -38,8 +38,8 @@ class ImageLoader(QWidget):
         self.total_images = None # 0
         self.largest_image = None #(0, 0)
         self.smallest_image = None #(float("inf"), float("inf"))
-        self.max_images = 0
-        self.resize_xy = 0
+        self.max_images = 100
+        self.resize_xy = 250
         # User defined parameters
         # Set initial values for train/test sliders and spinboxes
         self.train_size = self.default_split # Default Train value
@@ -50,6 +50,7 @@ class ImageLoader(QWidget):
         self.testSpin.setValue(self.test_size)
         self.resizeXY.setValue(0)
         self.maxImages.setValue(0)
+        self.reset_params()
         # self.reset_params()
 
         # Set initial layouts and buttons to disabled
@@ -103,11 +104,13 @@ class ImageLoader(QWidget):
             self.enable_layout(False, self.datasetParams)
             self.enable_layout(False, self.datasetDetails)
             self.confirmSelection.setEnabled(True) # This is needed to enable the checkbox because it is inside the datasetParams layout above
+            self.disable_test()
 
         else:
             self.continueNext.setEnabled(False)
             self.enable_layout(True, self.datasetParams)
             self.enable_layout(True, self.datasetDetails)
+            self.disable_test()
             # self.confirmSelection.setEnabled(True) # This already gets enabled
 
 
@@ -150,11 +153,12 @@ class ImageLoader(QWidget):
 
     # Reset all parameters to their default values
     def reset_params(self):
-        self.maxImages.setValue(0)
-        self.resizeXY.setValue(0)
+        self.maxImages.setValue(100)
+        self.resizeXY.setValue(250)
         self.trainSlider.setValue(self.default_split) 
         # Disable reset param button
         self.resetParams.setEnabled(False)
+        self.disable_test()
 
     # Update folder into and tool tips
     def update_folder_info(self):
@@ -371,15 +375,16 @@ class ImageLoader(QWidget):
                             "x_test": self.x_test,
                             "y_train": self.y_train,
                             "y_test": self.y_test  }
-    
-    def enumerate(self, animal, animalList):
-        for i in range(len(animalList)):
-            if animal == animalList[i]:
+
+    def enumerate(self, label, label_list):
+        for i in range(len(label_list)):
+            if label == label_list[i]:
                 return i
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     # Initialize dark theme
+    from PyQt5.QtWidgets import QStackedWidget
     dark_stylesheet = """
         /* Set the background color of the application */
         QApplication { background-color: #333333; }
@@ -523,9 +528,10 @@ if __name__ == "__main__":
             border: 2px solid #888888;
         }
     """
-
+    widget = QStackedWidget()
+    # mainMenu = MainMenu(widget)
     app.setStyleSheet(dark_stylesheet)
-    check = ImageLoader()
+    check = ImageLoader(widget)
     check.show()
     sys.exit(app.exec())
 

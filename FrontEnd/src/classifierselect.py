@@ -244,4 +244,4 @@ class ClassifierSelect(QWidget):
             "var": dp.var
         }
         print(len(modelData["x_test"]))
-        main.transition(self.stack, gallery.Gallery(self.stack, modelData, self.data_dict))
+        main.transition(self.stack, gallery.Gallery(self.stack, modelData))

@@ -83,7 +83,7 @@ class Explainer(QWidget):
         self.image.setPixmap(pixmap)
 
 
-        back.clicked.connect(lambda: main.transition(stack, gallery.Gallery(stack, modelData, data_dict=None)))
+        back.clicked.connect(lambda: main.transition(stack, gallery.Gallery(stack, modelData)))
         self.go.clicked.connect(lambda: self.explain(id, x_test, y_test, iclf, clfs[self.currentClf]))
         self.show()
     

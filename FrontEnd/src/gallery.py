@@ -8,17 +8,15 @@ from PyQt5.QtGui import QPixmap, QPainter, QFont
 
 
 class Gallery(QWidget):
-    def __init__(self, stack, modelData, data_dict):
+    def __init__(self, stack, modelData):
         #Sets labels etc
         super(Gallery, self).__init__()
-
-        print(data_dict["x_test"].shape)
 
         self.modelData = modelData
         back = QPushButton("Back", self)
         back.clicked.connect(
             lambda: main.transition(
-            stack, classifierselect.ClassifierSelect(stack), data_dict=None
+                stack, classifierselect.ClassifierSelect(stack), data_dict=modelData
             ))
         
         gridLayout = QGridLayout()

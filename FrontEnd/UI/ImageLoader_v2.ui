@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Image Loader v3</string>
+   <string>Image Loader v2</string>
   </property>
   <widget class="QPushButton" name="back">
    <property name="geometry">
