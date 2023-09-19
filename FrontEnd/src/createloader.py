@@ -25,8 +25,6 @@ class ImageLoader(QWidget):
                           "x_test": None,
                           "y_train": None,
                           "y_test": None}
-                                
-        # back.clicked.connect(lambda: main.transition(stack, gallery.Gallery(stack, modelData)))
 
 
     # Sets the initial state of the application and values
@@ -68,7 +66,6 @@ class ImageLoader(QWidget):
         self.maxImages.valueChanged.connect(self.update_spins)
         self.confirmSelection.clicked.connect(self.confirm_selection)
         self.resetParams.clicked.connect(self.reset_params)
-        # self.continueNext.clicked.connect(lambda: main.transition(self.stack, clfSel.ClassifierSelect(self.stack, self.data_dict)))
         self.continueNext.clicked.connect(self.load_data_continue)
         self.back.clicked.connect(lambda: main.transition(self.stack, main.MainMenu(self.stack)))
         # self.resetParams.clicked.connect(self.test_buttons)
@@ -330,7 +327,7 @@ class ImageLoader(QWidget):
                     # This is a required by numpy arrays, otherwise it will throw errors
                     # about inconsistent array shapes and inhomogeneous arrays
                     if target_size is None:
-                        target_size = (500,500) # Note: OpenCV uses (width, height) instead of (height, width)
+                        target_size = (100,100) # Note: OpenCV uses (width, height) instead of (height, width)
                     else:    
                         image = cv2.resize(image_rgb, target_size)
 

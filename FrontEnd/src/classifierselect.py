@@ -9,14 +9,14 @@ import json
 
 class ClassifierSelect(QWidget):
 
-    def __init__(self, stack, data_dict):
+    def __init__(self, stack, modelData):
         super().__init__()
         f = open('FrontEnd/src/ClassifierPrefs.json')
         self.params = {}
         self.stack = stack
         self.hps = {}
         data = json.load(f)
-        self.data_dict = data_dict
+        self.modelData = modelData
         #Add title
         self.title = QLabel(self)
         self.title.setGeometry(190, 30, 391, 61)
@@ -234,8 +234,8 @@ class ClassifierSelect(QWidget):
             "vals": vals
         }
 
-        dp = dataprocessor.DataProcessor(prefs, self.data_dict)
-        modelData = {
+        dp = dataprocessor.DataProcessor(prefs, self.modelData)
+        self.modelData = {
             "x_test": dp.x_test,
             "y_test": dp.y_test,
             "iclf": dp.iclf,
@@ -243,5 +243,4 @@ class ClassifierSelect(QWidget):
             "vals": dp.vals,
             "var": dp.var
         }
-        print(len(modelData["x_test"]))
-        main.transition(self.stack, gallery.Gallery(self.stack, modelData, self.data_dict))
+        main.transition(self.stack, gallery.Gallery(self.stack, self.modelData, True))
