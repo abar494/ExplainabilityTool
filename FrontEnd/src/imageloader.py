@@ -4,238 +4,181 @@ import matplotlib.pyplot as plt  # Plotting Images
 from PIL import Image
 from PyQt5.QtWidgets import QFileDialog, QApplication, QWidget, QVBoxLayout, QHBoxLayout
 from PyQt5.QtCore import Qt
-from PyQt5 import uic
-from dataset import Dataset, save_dataset_to_file
-
-# Temp dark stylesheet
-dark_stylesheet = """
-    /* Set the background color of the application */
-    QApplication { background-color: #333333; }
-
-    /* Set the text color for all widgets */
-    QWidget { color: #FFFFFF; background-color: #333333 }
-
-    /* Set the background and text color for buttons */
-    QPushButton {
-        background-color: #555555;
-        color: #FFFFFF;
-        border: none;
-        padding: 5px;
-        border-radius: 2.5px;
-    }
-
-    /* Set the background color of buttons when hovered */
-    QPushButton:hover {
-        background-color: #888888;
-    }
-
-    /* Set the background color of buttons when pressed */
-    QPushButton:pressed {
-        background-color: #333333;
-    }
-
-    QPushButton:disabled {
-        background-color: #444444;
-        color: #888888;
-    }
-
-    /* Set the background color of disabled spin boxes */
-    QSpinBox:disabled {
-        background-color: #444444;
-        color: #888888;
-    }
-
-    QSpinBox:disabled::up-button {
-        border: 1px solid #999999; /* Border color for up arrow when disabled */
-    }
-
-    QSpinBox:disabled::down-button {
-        border: 1px solid #999999; /* Border color for down arrow when disabled */
-    }
-
-    /* Set the color of disabled QLabel text */
-    QLabel:disabled {
-        color: #888888;
-    }
-    QSlider {
-        background-color: #555555;
-        height: 8px;
-    }
-
-    QSlider::groove:horizontal {
-        background-color: #888888;
-        height: 8px;
-    }
-
-    QSlider::handle:horizontal {
-        background-color: #FFFFFF;
-        width: 12px;
-        margin: -2px 0;
-        border-radius: 6px;
-    }
-
-    QSlider::sub-page:horizontal {
-        background-color: #FFFFFF;
-        height: 8px;
-    }
-
-    QSlider::add-page:horizontal {
-        background-color: #444444;
-        height: 8px;
-    }
-
-    QSlider:disabled {
-        background-color: #444444;
-    }
-
-    QSlider::groove:disabled {
-        background-color: #555555;
-    }
-
-    QSlider::handle:disabled {
-        background-color: #888888;
-    }
-
-    QSlider::sub-page:disabled {
-        background-color: #888888;
-    }
-
-    QSlider::add-page:disabled {
-        background-color: #444444;
-    }
-
-    /* Set the background and text color for line edit */
-    QLineEdit {
-        background-color: #555555;
-        color: #FFFFFF;
-        border: 1px solid #888888;
-        padding: 5px;
-    }
-    
-    /* Set the background color of line edit when focused */
-    QLineEdit:focus {
-        background-color: #777777;
-        border: 1px solid #FFFFFF;
-    }
-
-    QCheckBox::disabled {
-        color: #888888
-    }
-
-
-    QCheckBox::indicator {
-        width: 10px;
-        height: 10px;
-        border: 2px solid #888888;
-        background-color: #222222;
-    }
-
-    QCheckBox::indicator:unchecked {
-        border: 2px solid #888888;
-        background-color: #222222;
-    }
-
-    QCheckBox::indicator:checked {
-        background-color: #888888;
-    }
-
-    QCheckBox::indicator:hover {
-        border: 2px solid #aaaaaa;
-    }
-
-    QCheckBox::indicator:checked:hover {
-        border: 2px solid #888888;
-    }
-
-    QCheckBox::indicator:unchecked:hover {
-        border: 2px solid #888888;
-    }
-
-"""
-
-        # border: 2px solid #00ff00;
+from PyQt5 import QtCore, uic
+import numpy as np
+import cv2
+import main as main
+import classifierselect as clfSel
+import noise
+from sklearn.model_selection import train_test_split as train_test_split_sklearn
+# from dataset import Dataset, save_dataset_to_file
 
 
 class ImageLoader(QWidget):
     def __init__(self, stack):
         super().__init__()
-        uic.loadUi("FrontEnd/UI/ImageLoader.ui", self)
-        
-        self.init_button_connects()
-        self.init_initial_values()
-        self.init_sliders()
-        self.init_buttons_and_layouts()
-        # Initially most buttons are disabled.
+        uic.loadUi("FrontEnd/UI/ImageLoader_v3.ui", self)
+        self.default_split = 60 # This is the default split for the train/test sliders
+        # Initialise initial states
+        self.initial_state()
+        self.connect_all()
+        self.stack = stack
+        self.data_dict = {"x_train": None,
+                          "x_test": None,
+                          "y_train": None,
+                          "y_test": None}
+                                
+        # back.clicked.connect(lambda: main.transition(stack, gallery.Gallery(stack, modelData)))
 
-        # Set initial tool tips
-        self.dataDir.setToolTip("Folder Directory: None")
-        self.dataFile.setToolTip("File Directory: None")
-
-    # Connect buttons to their functions
-    def init_button_connects(self):
-        self.selectData.clicked.connect(self.select_file)
-        self.selectDir.clicked.connect(self.select_folder)
-        self.resetData.clicked.connect(self.reset_selection)
-        self.resetSpins.clicked.connect(self.reset_parameters)
-        # Temporary function of the BACK button prints all the class attributes.
-        self.back.clicked.connect(self.print_attributes) 
-        self.maxImages.valueChanged.connect(self.update_spins)
-        self.resizeX.valueChanged.connect(self.update_spins)
-        self.resizeY.valueChanged.connect(self.update_spins)
-        # Connect Train/Test Split sliders and spinboxes to their function
-        self.trainSlider.valueChanged.connect(self.update_sliders)
-        self.trainSpin.valueChanged.connect(self.update_sliders)
-        self.confirmSelection.stateChanged.connect(self.confirm_selection)
-        self.saveFile.clicked.connect(self.save_file)
-
-        #     lambda: self.save_file(self.fileName))
-
-    # Set attributes to their defaults
-    def init_initial_values(self):
-        self.max_images_value = 100
-        self.resize_x_value = 500
-        self.resize_y_value = 500
-        self.image_count = 0
-        self.largest_size = (0, 0)
-        self.smallest_size = (0, 0)
-        self.subdirectories = None
+    # Sets the initial state of the application and values
+    def initial_state(self):
+        # Set initial values to default
         self.folder_directory = None
-        self.file_directory = None
         self.folder_name = None
-        self.file_name = None
-        self.default_max_images = 0
-        self.default_max_resize = 0
-        self.num_classes = 0
-        self.save_file_name = None
+        self.total_classes = None #0
+        self.total_images = None # 0
+        self.largest_image = None #(0, 0)
+        self.smallest_image = None #(float("inf"), float("inf"))
+        self.max_images = 100
+        self.resize_xy = 250
+        # User defined parameters
+        # Set initial values for train/test sliders and spinboxes
+        self.train_size = self.default_split # Default Train value
+        self.test_size = 100 - self.train_size
+        self.trainSlider.setValue(self.train_size)
+        self.testSlider.setValue(self.test_size) # Should always reflect the complement of the train slider
+        self.trainSpin.setValue(self.train_size)
+        self.testSpin.setValue(self.test_size)
+        self.resizeXY.setValue(0)
+        self.maxImages.setValue(0)
+        self.reset_params()
+        # self.reset_params()
 
-    # Set sliders to their defaults
-    def init_sliders(self):
-        self.default_train_split = self.train_test_split = 70 # This value sets the default on the GUI
-        self.trainSlider.setValue(self.default_train_split)
-        self.testSlider.setValue(100 - self.default_train_split)
-        # Disable Test text, spinbox, and slider. Should always be disabled.
+        # Set initial layouts and buttons to disabled
+        self.enable_layout(False, self.datasetDetails)
+        self.enable_layout(False, self.datasetParams)
+        self.resetData.setEnabled(False)
+        self.continueNext.setEnabled(False)
+
+    # Connect all buttons/sliders/spinboxes to their respective functions
+    def connect_all(self):
+        self.selectDir.clicked.connect(self.select_folder)
+        self.resetData.clicked.connect(self.reset_data)
+        self.trainSlider.valueChanged.connect(self.update_sliders)
+        self.trainSpin.valueChanged.connect(self.update_sliders) # update_sliders() handles both sliders and spin boxes
+        self.resizeXY.valueChanged.connect(self.update_spins)
+        self.maxImages.valueChanged.connect(self.update_spins)
+        self.confirmSelection.clicked.connect(self.confirm_selection)
+        self.resetParams.clicked.connect(self.reset_params)
+        # self.continueNext.clicked.connect(lambda: main.transition(self.stack, clfSel.ClassifierSelect(self.stack, self.data_dict)))
+        self.continueNext.clicked.connect(self.load_data_continue)
+        self.back.clicked.connect(lambda: main.transition(self.stack, main.MainMenu(self.stack)))
+        # self.resetParams.clicked.connect(self.test_buttons)
+
+    def load_data_continue(self):
+        self.load_dataset_from_dir()
+        print(self.data_dict["y_train"][0])
+        print(self.data_dict["y_test"][0])
+
+        # main.transition(self.stack, clfSel.ClassifierSelect(self.stack, self.data_dict))
+        main.transition(self.stack, noise.Noise(self.stack, self.data_dict))
+
+    def update_spins(self):
+        
+        if self.sender() == self.resizeXY:
+            self.resize_xy = self.resizeXY.value()
+        else:
+            self.max_images = self.maxImages.value()
+
+        self.resetParams.setEnabled(not self.params_default())       
+
+    # If confirm selection is checked, enable continue button
+    def confirm_selection(self):
+        # Enable buttons and layouts.
+        checked = self.confirmSelection.isChecked() 
+
+        if checked: #and self.params_default() == False:
+            # self.confirmSelection.setEnabled(not checked)
+            self.continueNext.setEnabled(True)
+            self.enable_layout(False, self.datasetParams)
+            self.enable_layout(False, self.datasetDetails)
+            # This is needed to enable the checkbox because it is inside the datasetParams layout above
+            self.confirmSelection.setEnabled(True)
+            self.disable_test()
+
+        else:
+            self.continueNext.setEnabled(False)
+            self.enable_layout(True, self.datasetParams)
+            self.enable_layout(True, self.datasetDetails)
+            self.disable_test()
+            # self.confirmSelection.setEnabled(True) # This already gets enabled
+
+        # print(self.confirmSelection.isChecked())
+        # self.enable_layout(not checked, self.datasetDetails)
+        # self.enable_layout(not checked, self.datasetParams)
+        # self.continueNext.setEnabled(not checked)
+
+    # Returns False if any of the parameters are NOT default values
+    def params_default(self):
+        
+        if((self.maxImages.value()) != 0 or
+            (self.resizeXY.value() != 0) or
+            (self.trainSlider.value() != self.default_split)
+            ):
+            return False
+        else:
+            return True
+
+    # Disable test slider, text, and spinbox
+    def disable_test(self):
         self.testSlider.setEnabled(False)
         self.testSpin.setEnabled(False)
         self.testText.setEnabled(False)
 
-    # Initialise all buttons and layouts
-    def init_buttons_and_layouts(self):
-        self.selectDir.setEnabled(True)
-        self.selectData.setEnabled(True)
-        self.resetData.setEnabled(False)
-        self.resetSpins.setEnabled(False)
-        self.resetData.setEnabled(False)
-        self.confirmSelection.setEnabled(False)
-        self.dataFile.setText("Selected File: None")
-        self.dataDir.setText("Selected Folder: None")
-        self.enable_parameter_layout(False)
-        self.maxImages.setMaximum(100000)
-        self.saveFile.setEnabled(False)
-        self.fileName.setEnabled(False)
-        # Initially disable information layout
-        self.enable_layout(False, self.findChild(QVBoxLayout, "infoLayout"))
-        # self.enable_layout(False, self.findChild(QVBoxLayout, "saveToFile"))
-        self.confirmSelection.setEnabled(False)
+    # Resets everything their initial state
+    def reset_data(self):
+        self.initial_state()
+        self.total_classes = "X"
+        self.total_images = "X"
+        self.largest_image = "X"
+        self.smallest_image = "X"
+        self.folder_directory = ""
+        self.folder_name = ""
+        # Update information
+        self.reset_params()
+        self.update_folder_info()
+        self.update_info()
+
+    # Reset all parameters to their default values
+    def reset_params(self):
+        self.maxImages.setValue(100)
+        self.resizeXY.setValue(250)
+        self.trainSlider.setValue(self.default_split) 
+        # Disable reset param button
+        self.resetParams.setEnabled(False)
+        self.disable_test()
+
+    # Update folder into and tool tips
+    def update_folder_info(self):
+        self.selectedDataset.setText("Selected Dataset: " + self.folder_name)
+        self.selectedDataset.setToolTip("Dataset Directory: " + str(self.folder_directory))
+        self.selectDir.setToolTip("Dataset Directory: " + str(self.folder_directory))
+
+    # Select folder containing dataset
+    def select_folder(self):
+        folder_path = QFileDialog.getExistingDirectory(self, "Select Folder")
+        # This handles situations where the user cancels the file dialog.
+        if folder_path:
+            self.folder_name = os.path.basename(folder_path)
+            self.folder_directory = folder_path
+            self.update_folder_info()
+            self.get_dataset_info()
+            self.update_info()
+            # Enable buttons and layouts.
+            self.enable_layout(True, self.datasetDetails)
+            self.enable_layout(True, self.datasetParams)
+            self.resetData.setEnabled(True)
+            self.disable_test()  # "Test" text, slider, and spinbox should always be disabled
 
     # Upate Train and Test split sliders.
     def update_sliders(self):
@@ -252,69 +195,21 @@ class ImageLoader(QWidget):
         self.testSlider.setValue(complement)
         self.testSpin.setValue(complement)
         self.train_test_split = train_test_split
-        self.check_enable_params()
-        # print(self.train_test_split)
+        huh = self.params_default()
+        print("huh = " + str(huh))
+        self.resetParams.setEnabled(huh)
 
-    # Update attributes with current spinbox values, and enable clearing of spinboxes.
-    def update_spins(self):
-        self.max_images_value = self.maxImages.value()
-        self.resize_x_value = self.resizeX.value()
-        self.resize_y_value = self.resizeY.value()
-        print(self.max_images_value, self.resize_x_value, self.resize_y_value)
-        # If any of the spinboxes have a none default value, enable the clear button
-        self.check_enable_params()
-
-    # If params aren't default, enable param reset.
-    def check_enable_params(self):
-        if (
-            self.max_images_value != self.default_max_images
-            or self.resize_x_value != self.default_max_resize
-            or self.resize_y_value != self.default_max_resize
-            or self.train_test_split != self.default_train_split
-        ):
-            self.resetSpins.setEnabled(True)
-        else:
-            self.resetSpins.setEnabled(False)
-
-    # Set spinbox values to default and disable clear button.
-
-    # Reset all params.
-    def reset_parameters(self):
-        # Setting these values to default also automatically updates the corresponding class attributes (via ValueChanged()).
-        self.maxImages.setValue(self.default_max_images)
-        self.resizeX.setValue(self.default_max_resize)
-        self.resizeY.setValue(self.default_max_resize)
-        self.trainSpin.setValue(self.default_train_split)
-        self.resetSpins.setEnabled(False)  # Disable Reset after pressing.
-
-    # Clear selected files, re-enable and re-disable appropriate buttons and text
-    def reset_selection(self):
-        self.init_initial_values()
-        self.init_sliders()
-        self.init_buttons_and_layouts()
-        self.reset_parameters()
-        self.update_info()
-        self.confirmSelection.setChecked(False)
-
-    # Select the directory containing the dataset. Enable appropriate Pushbuttons and SpinBoxes
-    def select_folder(self):
-        folder_path = QFileDialog.getExistingDirectory(self, "Select Folder")
-        if folder_path:
-            self.folder_name = os.path.basename(folder_path)
-            self.folder_directory = folder_path
-            self.dataDir.setText("Selected Folder: " + self.folder_name)
-            self.dataDir.setToolTip("Folder Directory: " + str(self.folder_directory))
-
-            self.selectData.setEnabled(False)
-            self.dataFile.setText("")
-            self.confirmSelection.setEnabled(True)
-            self.resetData.setEnabled(True)
-            self.enable_parameter_layout(True)
-            self.get_folder_info()
-            self.update_info()
+    # Helper function to disable and enable items in a given layout. Ideal for parent layouts
+    def enable_layout(self, enable=True, layout=None):
+        for index in range(layout.count()):
+            item = layout.itemAt(index)
+            if item.widget():
+                item.widget().setEnabled(enable)
+            elif item.layout():
+                self.enable_layout(enable, item.layout())
 
     # Get info about chosen folder.
-    def get_folder_info(self):
+    def get_dataset_info(self):
         folder_name = self.folder_name
         folder_directory = self.folder_directory
         subdirectories = 0
@@ -353,190 +248,289 @@ class ImageLoader(QWidget):
                             image_count += 1
                             image.close()
 
-                print("Folder Information:")
-                print(f"Name: {folder_name}")
-                print(f"Directory: {folder_directory}")
-                print(f"Number of Subdirectories: {subdirectories}")
-                print(f"Number of Images: {image_count}")
-                print(f"Largest Image Size: {largest_size}")
-                print(f"Smallest Image Size: {smallest_size}")
+                # print("Folder Information:")
+                # print(f"Name: {folder_name}")
+                # print(f"Directory: {folder_directory}")
+                # print(f"Number of Subdirectories: {subdirectories}")
+                # print(f"Number of Images: {image_count}")
+                # print(f"Largest Image Size: {largest_size}")
+                # print(f"Smallest Image Size: {smallest_size}")
 
-                self.subdirectories = subdirectories
-                self.image_count = image_count
-                self.largest_size = largest_size
-                self.smallest_size = smallest_size
+                self.total_images = image_count
+                self.largest_image = largest_size
+                self.smallest_image = smallest_size
+                self.total_classes = subdirectories
 
-                self.enable_layout(True, self.findChild(QVBoxLayout, "infoLayout"))
-                self.update_info()
         except Exception as e:
             print("Error occured: ", e)
 
-    # Select a .pkl (pickle) file
-    def select_file(self):
-        # Opens file explorer
-        file_dialog = QFileDialog()
-        file_dialog.setFileMode(QFileDialog.ExistingFile)
-        file_dialog.setNameFilter("All files (*.pkl *.mat *.joblib)")
-
-        if file_dialog.exec_() == QFileDialog.Accepted:
-            selected_files = file_dialog.selectedFiles()
-            # If the User does select a file (restricted to selecting one file only)
-            if selected_files:
-                file_path = selected_files[0]
-                self.file_directory = file_path
-                file_name = os.path.basename(self.file_directory)
-                self.file_name = file_name
-                self.dataFile.setText("Selected File: " + self.file_name)
-                self.dataFile.setToolTip("File Directory: " + str(self.file_directory))
-
-                self.selectDir.setEnabled(False)  # Select Folder button
-                self.dataDir.setText("")  # Remove text
-                self.confirmSelection.setEnabled(True)
-                # Enable reset to clear file selection
-                self.resetData.setEnabled(True)
-                # if a file has been selected, enable use of spinboxes etc
-                self.enable_parameter_layout(True)
-                self.get_file_info()
-                self.test.print_dataset_distribution()
-
-    # TODO: Implement function to display information about the selected file
-    # - Include .mat handling.
-    # Helper function to display information about the selected file
-    def get_file_info(self):
-        self.test = Dataset()
-        self.test.load_dataset_from_file(self.file_directory)
-        self.image_count = self.test.num_images
-        self.num_classes = len(self.test.label)
-        self.update_info()
-        # self.print_dataset_attributes(self.test)
-        # print("Instance Attributes:")
-        # test.plot_image(0, 0)
-        if self.test.target_size is not None:
-            self.resizeX.setValue(self.test.target_size[0])
-            self.resizeY.setValue(self.test.target_size[1])
-        else:
-            self.resizeX.setValue(500)
-            self.resizeY.setValue(500)
-        self.maxImages.setValue(self.image_count // len(self.test.label))
-        # self.enable_parameter_layout(True)
-        self.maxImages.setMaximum(self.image_count // len(self.test.label))
-
-        self.enable_layout(True, self.findChild(QVBoxLayout, "infoLayout"))
-
-    def print_dataset_attributes(self, dataset):
-
-        for attr_name, attr_value in vars(dataset).items():
-            if (
-                not attr_name.startswith("__")
-                and not callable(attr_value)
-                and not isinstance(attr_value, (QWidget, QVBoxLayout, QHBoxLayout))
-            ):
-                if attr_name != "data":
-                    print(f"- {attr_name}: {attr_value}")
-
-    
-
-    # Update dataset info with appropriate information.
+    # Updates the details of the dataset info layout
     def update_info(self):
-        layout = self.findChild(QVBoxLayout, "datasetInfo")
+        layout = self.findChild(QVBoxLayout, "details")
 
         info_list = [
-            self.folder_directory
-            if self.file_directory is None
-            else self.file_directory,
-            self.folder_name if self.file_name is None else self.file_name,
-            self.subdirectories,
-            self.image_count,
-            self.num_classes if self.folder_name is None else self.subdirectories,
-            self.largest_size,
-            self.smallest_size,
-            (self.resize_x_value, self.resize_y_value),
-            str(self.train_test_split) + str("%"),
+            self.total_classes,
+            self.total_images,
+            self.largest_image,
+            self.smallest_image,
         ]
-
+        # Iterate through the layout and update the text of each label
         for index in range(layout.count()):
             item = layout.itemAt(index)
             if item.widget():
                 item.widget().setText(str(info_list[index]))
-        # self.test = Dataset()
-        # self.test.num_images = self.image_count
-        # self.test.train_test_split = self.train_test_split
-        # # self.test.
 
-    # 
-    def confirm_selection(self):
-        checked = not self.confirmSelection.isChecked() 
-        self.update_info()
-        self.enable_parameter_layout(checked)
-        self.enable_layout(checked, self.findChild(QVBoxLayout, "infoLayout"))
-        self.resetSpins.setEnabled(checked)
-
-        self.enable_layout(not checked, self.findChild(QVBoxLayout, "saveToFile"))
-
-    # Helper function to disable and enable items in a given layout.
-    def enable_layout(self, enable=True, layout=None):
-        for index in range(layout.count()):
-            item = layout.itemAt(index)
-            if item.widget():
-                item.widget().setEnabled(enable)
-            elif item.layout():
-                self.enable_layout(enable, item.layout())
-
-    # Enable or Disable parameterLayout
-    def enable_parameter_layout(self, enable=True):
-        # Disable/Enable SpinBoxes and Text
-        layout = self.findChild(QHBoxLayout, "parameterLayout")
-        self.enable_layout(enable, layout)
-        self.trainText.setEnabled(enable)
-        # These items should always be off
-        self.testSpin.setEnabled(False)
-        self.testSlider.setEnabled(False)
-        self.testText.setEnabled(False)
-
-    #     # Connect the textChanged signal of the line edit to a custom slot
-    #     line_edit.textChanged.connect(self.handle_text_changed)
-
-    def save_file(self):
-        self.save_file_name = self.fileName.text()
-        test = Dataset()
-
-        print("self.file_directory", self.file_directory)
-        print("self.folder_directory", self.folder_directory)
-
-        # Directory to load from, pass max number of images if not 0, resize X,Y values, and train/test split size
-        test.load_dataset_from_dir(self.folder_directory, self.max_images_value if self.max_images_value != 0 else None, (self.resize_x_value, self.resize_y_value) if self.resize_x_value and self.resize_y_value != 0 else None, self.train_test_split)
-        # elif self.file_name != None:
-        #     test.load_dataset_from_file(self.file_name)
-
-        # # Directory to save to(TODO: Change later), and file name to save as.
-        # print("Printing attributes of dataset")
-        # self.print_dataset_attributes(test)
-        save_dataset_to_file("Datasets/pickled",self.save_file_name,test)
-        
-
-    # Debugging method
-    def print_attributes(self):
-        print("Instance Attributes:")
-        for attr_name, attr_value in vars(self).items():
-            if (
-                not attr_name.startswith("__")
-                and not callable(attr_value)
-                and not isinstance(attr_value, (QWidget, QVBoxLayout, QHBoxLayout))
-            ):
-                print(f"- {attr_name}: {attr_value}")
-
-    # Ctrl+w shortcut to close window for Windows
+    # Ctrl+w shortcut to close window for Windows/Linux
     def keyPressEvent(self, event):
         if event.modifiers() == Qt.ControlModifier and event.key() == Qt.Key_W:
             self.close()
+
+    # Loads images from the selected root directory into a dictionary 
+    # The dictionary contains numpy arrays for the train and testing data,
+    # as well as the corresponding (numerical) labels for each image 
+    def load_dataset_from_dir(self):
+        dataset = []
+        # Could be refactored, but this is fine for now
+        class_labels = []  # List to store the corresponding labels for each image
+        image_formats = [".jpg", ".jpeg", ".png", ".jfif"] # Add more image formats here if needed
+
+        root_dir = self.folder_directory
+        limit = self.max_images
+        target_size = (self.resize_xy, self.resize_xy)
+        train_test_split = self.train_size
+
+        # Iterate through each subdirectory in the root directory
+        for class_name in os.listdir(root_dir):
+            class_dir = os.path.join(root_dir, class_name)
+            if not os.path.isdir(class_dir):
+                continue
+
+            images = []  # List to store the images for the current class
+            num_loaded_images = 0  # Track the number of images loaded for the current class
+
+            for file_name in os.listdir(class_dir):
+                if num_loaded_images == limit:
+                    break  # Reached the limit for the current class
+
+                # Get the full path of the image file
+                file_path = os.path.join(class_dir, file_name)
+                if not os.path.isfile(file_path):
+                    continue
+                
+                # Check if the file is an image
+                file_ext = os.path.splitext(file_path)[1].lower()
+                if file_ext not in image_formats:
+                    continue
+
+                try:
+                    # Load the image using OpenCV. Changed from PIL to OpenCV for future image processing
+                    image = cv2.imread(file_path)
+                    # As OpenCV uses BGR, convert from BGR to RGB
+                    image_rgb = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+                    # All images need to be resized to the same size
+                    # This is a required by numpy arrays, otherwise it will throw errors
+                    # about inconsistent array shapes and inhomogeneous arrays
+                    if target_size is None:
+                        target_size = (500,500) # Note: OpenCV uses (width, height) instead of (height, width)
+                    else:    
+                        image = cv2.resize(image_rgb, target_size)
+
+                    images.append(image)
+                    num_loaded_images += 1  # Increment the count of loaded images
+                    class_labels.append(class_name)  # Add the label for the current image
+
+                except Exception as e:
+                    print(f"Error loading image: {file_path} ({e})")
+
+            # Add the images for the current class to the dataset
+            dataset.extend(images)
+
+        # Convert the dataset and labels to numpy arrays
+        dataset_array = np.array(dataset)
+        class_labels_array = np.array(class_labels)
+
+        self.root = root_dir
+        self.limit = limit
+        self.target_size = target_size
+        self.num_images = num_loaded_images
+        # self.train_test_split = train_test_split
+        self.data = dataset_array
+        self.label = np.array(class_labels_array)
+        test_size = (100-self.train_size)/100 
+
+        # Get a list of class names from subdirectories    
+        class_list = os.listdir(root_dir)
+
+        self.num_class_labels = []
+        for i in range(len(self.label)):
+            self.num_class_labels.append(self.enumerate(self.label[i], class_list))
+
+        self.x_train, self.x_test, self.y_train , self.y_test = train_test_split_sklearn(self.data, self.num_class_labels, test_size=test_size)  
+        # Dictionary to store the data for use in proceeding pages
+        self.data_dict = {"x_train": self.x_train,
+                          "x_test": self.x_test,
+                          "y_train": self.y_train,
+                          "y_test": self.y_test}
+
+    def enumerate(self, label, label_list):
+        for i in range(len(label_list)):
+            if label == label_list[i]:
+                return i
 
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     # Initialize dark theme
+    from PyQt5.QtWidgets import QStackedWidget
+    dark_stylesheet = """
+        /* Set the background color of the application */
+        QApplication { background-color: #333333; }
+
+        /* Set the text color for all widgets */
+        QWidget { color: #FFFFFF; background-color: #333333 }
+
+        /* Set the background and text color for buttons */
+        QPushButton {
+            background-color: #555555;
+            color: #FFFFFF;
+            border: none;
+            padding: 5px;
+            border-radius: 2.5px;
+        }
+
+        /* Set the background color of buttons when hovered */
+        QPushButton:hover {
+            background-color: #888888;
+        }
+
+        /* Set the background color of buttons when pressed */
+        QPushButton:pressed {
+            background-color: #333333;
+        }
+
+        QPushButton:disabled {
+            background-color: #444444;
+            color: #888888;
+        }
+
+        /* Set the background color of disabled spin boxes */
+        QSpinBox:disabled {
+            background-color: #444444;
+            color: #888888;
+        }
+
+        QSpinBox:disabled::up-button {
+            border: 1px solid #999999; /* Border color for up arrow when disabled */
+        }
+
+        QSpinBox:disabled::down-button {
+            border: 1px solid #999999; /* Border color for down arrow when disabled */
+        }
+
+        /* Set the color of disabled QLabel text */
+        QLabel:disabled {
+            color: #888888;
+        }
+        QSlider {
+            background-color: #555555;
+            height: 8px;
+        }
+
+        QSlider::groove:horizontal {
+            background-color: #888888;
+            height: 8px;
+        }
+
+        QSlider::handle:horizontal {
+            background-color: #FFFFFF;
+            width: 12px;
+            margin: -2px 0;
+            border-radius: 6px;
+        }
+
+        QSlider::sub-page:horizontal {
+            background-color: #FFFFFF;
+            height: 8px;
+        }
+
+        QSlider::add-page:horizontal {
+            background-color: #444444;
+            height: 8px;
+        }
+
+        QSlider:disabled {
+            background-color: #444444;
+        }
+
+        QSlider::groove:disabled {
+            background-color: #555555;
+        }
+
+        QSlider::handle:disabled {
+            background-color: #888888;
+        }
+
+        QSlider::sub-page:disabled {
+            background-color: #888888;
+        }
+
+        QSlider::add-page:disabled {
+            background-color: #444444;
+        }
+
+        /* Set the background and text color for line edit */
+        QLineEdit {
+            background-color: #555555;
+            color: #FFFFFF;
+            border: 1px solid #888888;
+            padding: 5px;
+        }
+        
+        /* Set the background color of line edit when focused */
+        QLineEdit:focus {
+            background-color: #777777;
+            border: 1px solid #FFFFFF;
+        }
+
+        QCheckBox::disabled {
+            color: #888888
+        }
+
+
+        QCheckBox::indicator {
+            width: 10px;
+            height: 10px;
+            border: 2px solid #888888;
+            background-color: #222222;
+        }
+
+        QCheckBox::indicator:unchecked {
+            border: 2px solid #888888;
+            background-color: #222222;
+        }
+
+        QCheckBox::indicator:checked {
+            background-color: #888888;
+        }
+
+        QCheckBox::indicator:hover {
+            border: 2px solid #aaaaaa;
+        }
+
+        QCheckBox::indicator:checked:hover {
+            border: 2px solid #888888;
+        }
+
+        QCheckBox::indicator:unchecked:hover {
+            border: 2px solid #888888;
+        }
+    """
+    widget = QStackedWidget()
+    # mainMenu = MainMenu(widget)
     app.setStyleSheet(dark_stylesheet)
-    check = ImageLoader()
+    check = ImageLoader(widget)
     check.show()
     sys.exit(app.exec())
 
-   
+     

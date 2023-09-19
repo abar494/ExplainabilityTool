@@ -9,15 +9,12 @@ from PyQt5.QtGui import QPixmap, QPainter, QFont
 
 class Gallery(QWidget):
     def __init__(self, stack, modelData):
-        #Sets labels etc
+        # Sets labels etc
         super(Gallery, self).__init__()
 
         self.modelData = modelData
         back = QPushButton("Back", self)
-        back.clicked.connect(
-            lambda: main.transition(
-                stack, classifierselect.ClassifierSelect(stack), data_dict=modelData
-            ))
+        back.clicked.connect(lambda: main.transition(stack, classifierselect.ClassifierSelect(stack, data_dict=self.modelData)))
         
         gridLayout = QGridLayout()
         groupBox = QGroupBox()
@@ -38,14 +35,12 @@ class Gallery(QWidget):
         layout.addWidget(scroll)
         self.setLayout(layout)
 
-
         self.title = QLabel("Gallery", self)
         self.title.setGeometry(460, 90, 181, 61)
         font = QFont()
         font.setPointSize(50)
         font.setBold(True)
         self.title.setFont(font)
-
 
         self.description = QLabel("Choose an Image to test the model on!", self)
         self.description.setGeometry(410, 220, 271, 111)

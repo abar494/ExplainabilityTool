@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QWidget, QComboBox, QLineEdit, QLabel, QPushButton, 
 import main
 import gallery
 import dataprocessor
+import noise
 from PyQt5.QtGui import QFont
 import json
   
@@ -153,8 +154,10 @@ class ClassifierSelect(QWidget):
 
         #Add back button
         back = QPushButton("Back", self)
-        back.clicked.connect(lambda: main.transition(stack, main.MainMenu(stack)))
+        # back.clicked.connect(lambda: main.transition(stack, main.MainMenu(stack)))
+        back.clicked.connect(lambda: main.transition(self.stack, noise.Noise(self.stack, self.data_dict)))
         self.show()
+
     
 
     def clfSelect(self, data):

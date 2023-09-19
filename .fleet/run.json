@@ -3,7 +3,7 @@
         {
             "type": "python",
             "name": "Python configuration",
-            "file": "testing/noise_demo.py",
+            "file": "FrontEnd/src/main.py",
             "arguments": [],
         },
         
