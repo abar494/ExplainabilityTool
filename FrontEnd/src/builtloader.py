@@ -1,10 +1,8 @@
 import os
-import sys
-import matplotlib.pyplot as plt  # Plotting Images
 from PIL import Image
-from PyQt5.QtWidgets import QFileDialog, QApplication, QWidget, QVBoxLayout, QHBoxLayout, QMessageBox
+from PyQt5.QtWidgets import QFileDialog, QWidget, QVBoxLayout, QMessageBox
 from PyQt5.QtCore import Qt
-from PyQt5 import QtCore, uic
+from PyQt5 import uic
 import shutil
 import random
 import numpy as np

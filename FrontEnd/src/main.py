@@ -1,7 +1,6 @@
 import os
 import shutil
 import sys
-import classifierselect
 import createloader
 import builtloader
 from PyQt5.QtGui import QFont

@@ -1,14 +1,11 @@
 import os
-import sys
-import matplotlib.pyplot as plt  # Plotting Images
 from PIL import Image
-from PyQt5.QtWidgets import QFileDialog, QApplication, QWidget, QVBoxLayout, QHBoxLayout
+from PyQt5.QtWidgets import QFileDialog, QWidget, QVBoxLayout
 from PyQt5.QtCore import Qt
-from PyQt5 import QtCore, uic
+from PyQt5 import uic
 import numpy as np
 import cv2
 import main as main
-import classifierselect as clfSel
 import noise
 from sklearn.model_selection import train_test_split as train_test_split_sklearn
 # from dataset import Dataset, save_dataset_to_file
@@ -69,12 +66,10 @@ class ImageLoader(QWidget):
         self.resetParams.clicked.connect(self.reset_params)
         self.continueNext.clicked.connect(self.load_data_continue)
         self.back.clicked.connect(lambda: main.transition(self.stack, main.MainMenu(self.stack)))
-        # self.resetParams.clicked.connect(self.test_buttons)
 
     def load_data_continue(self):
         self.load_dataset_from_dir()
 
-        # main.transition(self.stack, clfSel.ClassifierSelect(self.stack, self.data_dict))
         main.transition(self.stack, noise.Noise(self.stack, self.data_dict))
 
 

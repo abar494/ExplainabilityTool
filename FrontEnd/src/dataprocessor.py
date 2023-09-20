@@ -1,14 +1,10 @@
-import glob
 import os
 import shutil
 import numpy as np
-from scipy.io import loadmat
-from skimage.color import gray2rgb, rgb2gray
+from skimage.color import rgb2gray
 from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
-from sklearn.model_selection import train_test_split
 from PIL import Image
-from skimage.transform import resize
 import glob
 
 
@@ -101,17 +97,3 @@ class DataProcessor():
             return self
         def transform(self,X):
             return self._step_func(X)
-        
-    
-    # def defaultClassify(self):
-    #     mnist = loadmat(r"Datasets/MNIST/mnist-original.mat")
-    #     data, labels = mnist["data"].T, mnist["label"].T
-    #     random.Random(6).shuffle(data)
-    #     random.Random(6).shuffle(labels)
-    #     data, labels = data[:8000], labels[:8000]
-    #     data = np.stack([gray2rgb(iimg)
-    #                         for iimg in data.reshape((-1, 28, 28))], 0).astype(np.uint8)
-    #     labels = labels.astype(np.uint8)
-    #     self.pipes = [self.pipelineDict['Make Gray'], self.pipelineDict['Flatten Step']]
-    #     self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(data, np.ravel(labels), train_size=0.8)
-    #     self.classify()
