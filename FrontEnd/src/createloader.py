@@ -9,13 +9,14 @@ import numpy as np
 import cv2
 import main as main
 import classifierselect as clfSel
+import noise
 from sklearn.model_selection import train_test_split as train_test_split_sklearn
 # from dataset import Dataset, save_dataset_to_file
 
 class ImageLoader(QWidget):
     def __init__(self, stack): # TODO: Add stack here later
         super().__init__()
-        uic.loadUi("FrontEnd/UI/ImageLoader_v3.ui", self)
+        uic.loadUi("FrontEnd/UI/createLoader.ui", self)
         self.default_split = 60 # This is the default split for the train/test sliders
         # Initialise initial states
         self.initial_state()
@@ -36,8 +37,8 @@ class ImageLoader(QWidget):
         self.total_images = None # 0
         self.largest_image = None #(0, 0)
         self.smallest_image = None #(float("inf"), float("inf"))
-        self.max_images = 0
-        self.resize_xy = 0
+        self.max_images = 100
+        self.resize_xy = 100
         # User defined parameters
         # Set initial values for train/test sliders and spinboxes
         self.train_size = self.default_split # Default Train value
@@ -48,7 +49,7 @@ class ImageLoader(QWidget):
         self.testSpin.setValue(self.test_size)
         self.resizeXY.setValue(0)
         self.maxImages.setValue(0)
-        # self.reset_params()
+        self.reset_params()
 
         # Set initial layouts and buttons to disabled
         self.enable_layout(False, self.datasetDetails)
@@ -72,10 +73,9 @@ class ImageLoader(QWidget):
 
     def load_data_continue(self):
         self.load_dataset_from_dir()
-        print(self.data_dict["y_train"][0])
-        print(self.data_dict["y_test"][0])
 
-        main.transition(self.stack, clfSel.ClassifierSelect(self.stack, self.data_dict))
+        # main.transition(self.stack, clfSel.ClassifierSelect(self.stack, self.data_dict))
+        main.transition(self.stack, noise.Noise(self.stack, self.data_dict))
 
 
     def update_spins(self):
@@ -100,19 +100,13 @@ class ImageLoader(QWidget):
             self.enable_layout(False, self.datasetParams)
             self.enable_layout(False, self.datasetDetails)
             self.confirmSelection.setEnabled(True) # This is needed to enable the checkbox because it is inside the datasetParams layout above
-
+            self.disable_test()
         else:
             self.continueNext.setEnabled(False)
             self.enable_layout(True, self.datasetParams)
             self.enable_layout(True, self.datasetDetails)
             # self.confirmSelection.setEnabled(True) # This already gets enabled
-
-
-
-        # print(self.confirmSelection.isChecked())
-        # self.enable_layout(not checked, self.datasetDetails)
-        # self.enable_layout(not checked, self.datasetParams)
-        # self.continueNext.setEnabled(not checked)
+            self.disable_test()
 
     # Returns False if any of the parameters are NOT default values
     def params_default(self):
@@ -147,11 +141,12 @@ class ImageLoader(QWidget):
 
     # Reset all parameters to their default values
     def reset_params(self):
-        self.maxImages.setValue(0)
-        self.resizeXY.setValue(0)
+        self.maxImages.setValue(100)
+        self.resizeXY.setValue(100)
         self.trainSlider.setValue(self.default_split) 
         # Disable reset param button
         self.resetParams.setEnabled(False)
+        self.disable_test()
 
     # Update folder into and tool tips
     def update_folder_info(self):
@@ -190,9 +185,7 @@ class ImageLoader(QWidget):
         self.testSlider.setValue(complement)
         self.testSpin.setValue(complement)
         self.train_test_split = train_test_split
-        huh = self.params_default()
-        print("huh = " + str(huh))
-        self.resetParams.setEnabled(huh)
+        self.resetParams.setEnabled(self.params_default())
 
     # Helper function to disable and enable items in a given layout. Ideal for parent layouts
     def enable_layout(self, enable=True, layout=None):
@@ -243,13 +236,6 @@ class ImageLoader(QWidget):
                             image_count += 1
                             image.close()
 
-                # print("Folder Information:")
-                # print(f"Name: {folder_name}")
-                # print(f"Directory: {folder_directory}")
-                # print(f"Number of Subdirectories: {subdirectories}")
-                # print(f"Number of Images: {image_count}")
-                # print(f"Largest Image Size: {largest_size}")
-                # print(f"Smallest Image Size: {smallest_size}")
 
                 self.total_images = image_count
                 self.largest_image = largest_size
@@ -369,161 +355,7 @@ class ImageLoader(QWidget):
                             "y_train": self.y_train,
                             "y_test": self.y_test  }
     
-    def enumerate(self, animal, animalList):
-        for i in range(len(animalList)):
-            if animal == animalList[i]:
+    def enumerate(self, label, label_list):
+        for i in range(len(label_list)):
+            if label == label_list[i]:
                 return i
-
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    # Initialize dark theme
-    dark_stylesheet = """
-        /* Set the background color of the application */
-        QApplication { background-color: #333333; }
-
-        /* Set the text color for all widgets */
-        QWidget { color: #FFFFFF; background-color: #333333 }
-
-        /* Set the background and text color for buttons */
-        QPushButton {
-            background-color: #555555;
-            color: #FFFFFF;
-            border: none;
-            padding: 5px;
-            border-radius: 2.5px;
-        }
-
-        /* Set the background color of buttons when hovered */
-        QPushButton:hover {
-            background-color: #888888;
-        }
-
-        /* Set the background color of buttons when pressed */
-        QPushButton:pressed {
-            background-color: #333333;
-        }
-
-        QPushButton:disabled {
-            background-color: #444444;
-            color: #888888;
-        }
-
-        /* Set the background color of disabled spin boxes */
-        QSpinBox:disabled {
-            background-color: #444444;
-            color: #888888;
-        }
-
-        QSpinBox:disabled::up-button {
-            border: 1px solid #999999; /* Border color for up arrow when disabled */
-        }
-
-        QSpinBox:disabled::down-button {
-            border: 1px solid #999999; /* Border color for down arrow when disabled */
-        }
-
-        /* Set the color of disabled QLabel text */
-        QLabel:disabled {
-            color: #888888;
-        }
-        QSlider {
-            background-color: #555555;
-            height: 8px;
-        }
-
-        QSlider::groove:horizontal {
-            background-color: #888888;
-            height: 8px;
-        }
-
-        QSlider::handle:horizontal {
-            background-color: #FFFFFF;
-            width: 12px;
-            margin: -2px 0;
-            border-radius: 6px;
-        }
-
-        QSlider::sub-page:horizontal {
-            background-color: #FFFFFF;
-            height: 8px;
-        }
-
-        QSlider::add-page:horizontal {
-            background-color: #444444;
-            height: 8px;
-        }
-
-        QSlider:disabled {
-            background-color: #444444;
-        }
-
-        QSlider::groove:disabled {
-            background-color: #555555;
-        }
-
-        QSlider::handle:disabled {
-            background-color: #888888;
-        }
-
-        QSlider::sub-page:disabled {
-            background-color: #888888;
-        }
-
-        QSlider::add-page:disabled {
-            background-color: #444444;
-        }
-
-        /* Set the background and text color for line edit */
-        QLineEdit {
-            background-color: #555555;
-            color: #FFFFFF;
-            border: 1px solid #888888;
-            padding: 5px;
-        }
-        
-        /* Set the background color of line edit when focused */
-        QLineEdit:focus {
-            background-color: #777777;
-            border: 1px solid #FFFFFF;
-        }
-
-        QCheckBox::disabled {
-            color: #888888
-        }
-
-
-        QCheckBox::indicator {
-            width: 10px;
-            height: 10px;
-            border: 2px solid #888888;
-            background-color: #222222;
-        }
-
-        QCheckBox::indicator:unchecked {
-            border: 2px solid #888888;
-            background-color: #222222;
-        }
-
-        QCheckBox::indicator:checked {
-            background-color: #888888;
-        }
-
-        QCheckBox::indicator:hover {
-            border: 2px solid #aaaaaa;
-        }
-
-        QCheckBox::indicator:checked:hover {
-            border: 2px solid #888888;
-        }
-
-        QCheckBox::indicator:unchecked:hover {
-            border: 2px solid #888888;
-        }
-    """
-
-    app.setStyleSheet(dark_stylesheet)
-    check = ImageLoader()
-    check.show()
-    sys.exit(app.exec())
-
-     

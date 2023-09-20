@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import QWidget, QComboBox, QLineEdit, QLabel, QPushButton, 
       QSpacerItem, QHBoxLayout, QSizePolicy, QRadioButton, QVBoxLayout
 import main
 import gallery
+import createloader
 import dataprocessor
 from PyQt5.QtGui import QFont
 import json
@@ -153,7 +154,10 @@ class ClassifierSelect(QWidget):
 
         #Add back button
         back = QPushButton("Back", self)
-        back.clicked.connect(lambda: main.transition(stack, main.MainMenu(stack)))
+        # back.clicked.connect(lambda: main.transition(stack, main.MainMenu(stack)))
+        # self.show()
+
+        back.clicked.connect(lambda: main.transition(self.stack, createloader.ImageLoader(self.stack)))
         self.show()
     
 
@@ -185,17 +189,10 @@ class ClassifierSelect(QWidget):
         obj = self.findChild(QLabel, "hp"+str(combNum)+"Lab")
         hpName = obj.text()
         hpVal = box.currentText()
-        print(hpVal)
         self.params[hpName] = hpVal
         notApplic = self.findChild(QLabel, "hp"+str(combNum)+"CustLab")
         custom = self.findChild(QLineEdit, "hp"+str(combNum)+"Cust")
-        # if hpVal == "Custom" and (custom is None):
-        #     p = box.pos() + QPoint(80, 120)
-        #     line = QLineEdit(self)
-        #     line.setPlaceholderText("Enter Value")
-        #     line.setObjectName(hpName)
-        #     line.move(p)
-        #     line.show()
+        
         if hpVal == "Custom":
             custom.show()
             notApplic.hide()
@@ -236,10 +233,13 @@ class ClassifierSelect(QWidget):
 
         dp = dataprocessor.DataProcessor(prefs, self.modelData)
         self.modelData = {
+            "x_train": dp.x_train,
+            "y_train": dp.y_train,
             "x_test": dp.x_test,
             "y_test": dp.y_test,
             "iclf": dp.iclf,
             "clfs": dp.clfs,
+            "ival": dp.ival,
             "vals": dp.vals,
             "var": dp.var
         }

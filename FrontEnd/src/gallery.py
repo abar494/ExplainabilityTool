@@ -16,8 +16,15 @@ class Gallery(QWidget):
 
     def backTransition(self):
         if self.fromClf:
+            modelData = {
+                "x_train": self.modelData["x_train"],
+                "y_train": self.modelData["y_train"],
+                "x_test": self.modelData["x_test"],
+                "y_test": self.modelData["y_test"]   
+            }
+
             main.transition(
-                self.stack, classifierselect.ClassifierSelect(self.stack, self.modelData))
+                self.stack, classifierselect.ClassifierSelect(self.stack, modelData))
         else:
             main.transition(
                 self.stack, builtloader.ImageLoader(self.stack))
@@ -36,8 +43,10 @@ class Gallery(QWidget):
         gridLayout = QGridLayout()
         groupBox = QGroupBox()
         for i in range(min(len(self.modelData["x_test"]), 120)):
+            pixmap = QPixmap("Datasets/sampledata/" + str(i) + ".png")
+            pixmap = pixmap.scaled(100, 100)
             button = self.PicButton(
-                QPixmap("Datasets/sampledata/" + str(i) + ".png"), i)
+                pixmap, i)
             button.id = i
             button.clicked.connect(
                 lambda: self.explain(stack, self.modelData))
@@ -75,7 +84,7 @@ class Gallery(QWidget):
         id = self.sender().id
         if self.fromClf:
             main.transition(
-                stack, explainer.Explainer(stack, id, modelData))
+                stack, explainer.Explainer(stack, id, modelData, self.fromClf))
         else:
             print(id)
             print(modelData["iclf"])

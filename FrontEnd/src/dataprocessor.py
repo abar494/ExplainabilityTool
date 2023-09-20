@@ -32,12 +32,6 @@ class DataProcessor():
         # self.catClassify()
         self.classify()
 
-
-    def enumerate(self, animal, animalList):
-            for i in range(len(animalList)):
-                if animal == animalList[i]:
-                    return i
-
     def catClassify(self):
         fileList = glob.glob("Datasets/catdogpanda/*")
         fileList = fileList[:100]       
@@ -77,6 +71,11 @@ class DataProcessor():
         self.iclf.fit(self.x_train, self.y_train)
         print(self.iclf.score(self.x_test, self.y_test))
         self.pipes.pop()
+
+        if self.var in self.hps.keys():
+            self.ival = self.hps[self.var]
+        else:
+            self.ival = "Default"
 
         for i in range(len(self.vals)):
             self.hps[self.var] = self.vals[i]

@@ -88,6 +88,13 @@ if __name__ == "__main__":
     mainMenu = MainMenu(widget)
     widget.addWidget(mainMenu)
     widget.resize(733, 464)
+
+
+    # Read the style.qss file
+    with open('FrontEnd/UI/style.qss', 'r') as f:
+        style_sheet = f.read()
+
+    widget.setStyleSheet(style_sheet)
     # widget.setFixedHeight(500)
     # widget.setFixedWidth(600)
     widget.show()

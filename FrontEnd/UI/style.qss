@@ -1,0 +1,141 @@
+/* Set the background color of the application */
+QApplication { background-color: #333333; }
+
+/* Set the text color for all widgets */
+QWidget { color: #FFFFFF; background-color: #333333 }
+
+/* Set the background and text color for buttons */
+QPushButton {
+    background-color: #555555;
+    color: #FFFFFF;
+    border: none;
+    padding: 5px;
+    border-radius: 2.5px;
+}
+
+/* Set the background color of buttons when hovered */
+QPushButton:hover {
+    background-color: #888888;
+}
+
+/* Set the background color of buttons when pressed */
+QPushButton:pressed {
+    background-color: #333333;
+}
+
+QPushButton:disabled {
+    background-color: #444444;
+    color: #888888;
+}
+
+/* Set the background color of disabled spin boxes */
+QSpinBox:disabled {
+    background-color: #444444;
+    color: #888888;
+}
+
+QSpinBox:disabled::up-button {
+    border: 1px solid #999999; /* Border color for up arrow when disabled */
+}
+
+QSpinBox:disabled::down-button {
+    border: 1px solid #999999; /* Border color for down arrow when disabled */
+}
+
+/* Set the color of disabled QLabel text */
+QLabel:disabled {
+    color: #888888;
+}
+QSlider {
+    background-color: #555555;
+    height: 8px;
+}
+
+QSlider::groove:horizontal {
+    background-color: #888888;
+    height: 8px;
+}
+
+QSlider::handle:horizontal {
+    background-color: #FFFFFF;
+    width: 12px;
+    margin: -2px 0;
+    border-radius: 6px;
+}
+
+QSlider::sub-page:horizontal {
+    background-color: #FFFFFF;
+    height: 8px;
+}
+
+QSlider::add-page:horizontal {
+    background-color: #444444;
+    height: 8px;
+}
+
+QSlider:disabled {
+    background-color: #444444;
+}
+
+QSlider::groove:disabled {
+    background-color: #555555;
+}
+
+QSlider::handle:disabled {
+    background-color: #888888;
+}
+
+QSlider::sub-page:disabled {
+    background-color: #888888;
+}
+
+QSlider::add-page:disabled {
+    background-color: #444444;
+}
+
+/* Set the background and text color for line edit */
+QLineEdit {
+    background-color: #555555;
+    color: #FFFFFF;
+    border: 1px solid #888888;
+    padding: 5px;
+}
+
+/* Set the background color of line edit when focused */
+QLineEdit:focus {
+    background-color: #777777;
+    border: 1px solid #FFFFFF;
+}
+
+QCheckBox::disabled {
+    color: #888888
+}
+
+
+QCheckBox::indicator {
+    width: 10px;
+    height: 10px;
+    border: 2px solid #888888;
+    background-color: #222222;
+}
+
+QCheckBox::indicator:unchecked {
+    border: 2px solid #888888;
+    background-color: #222222;
+}
+
+QCheckBox::indicator:checked {
+    background-color: #888888;
+}
+
+QCheckBox::indicator:hover {
+    border: 2px solid #aaaaaa;
+}
+
+QCheckBox::indicator:checked:hover {
+    border: 2px solid #888888;
+}
+
+QCheckBox::indicator:unchecked:hover {
+    border: 2px solid #888888;
+}

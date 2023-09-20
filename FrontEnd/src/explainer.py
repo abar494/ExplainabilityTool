@@ -9,7 +9,9 @@ from lime.wrappers.scikit_image import SegmentationAlgorithm
 from skimage.segmentation import mark_boundaries
 
 class Explainer(QWidget):
-    def __init__(self, stack, id, modelData):
+
+
+    def __init__(self, stack, id, modelData, fromClf):
         super(Explainer, self).__init__()
 
         x_test, y_test, iclf, clfs = modelData["x_test"], modelData["y_test"], modelData["iclf"], modelData["clfs"] 
@@ -20,6 +22,7 @@ class Explainer(QWidget):
         self.go.hide()
         # self.hpSlider.move(30, 60)
 
+        self.modelData = modelData
         self.varLabel = QLabel("Variable " + modelData["var"] + " values:", self)
         font = QFont()
         font.setPointSize(15)
@@ -83,7 +86,7 @@ class Explainer(QWidget):
         self.image.setPixmap(pixmap)
 
 
-        back.clicked.connect(lambda: main.transition(stack, gallery.Gallery(stack, modelData, data_dict=None)))
+        back.clicked.connect(lambda: main.transition(stack, gallery.Gallery(stack, modelData, fromClf)))
         self.go.clicked.connect(lambda: self.explain(id, x_test, y_test, iclf, clfs[self.currentClf]))
         self.show()
     
@@ -91,7 +94,6 @@ class Explainer(QWidget):
         valObjectName = self.sender().objectName()
         valObjectId = int(valObjectName.split(" ")[1])
         self.currentClf = valObjectId
-        print(self.currentClf)
         self.go.show()
 
     def explain(self, id, x_test, y_test, iclf, vclf):
@@ -112,10 +114,10 @@ class Explainer(QWidget):
         # fig, (ax1, ax2) = plt.subplots(1,2, figsize = (8, 4))
         # ax1.imshow(mark_boundaries(temp, mask))
         temp, mask = explanation.get_image_and_mask(y_test[id], positive_only=False, num_features=10, hide_rest=False, min_weight = 0.01)
-        # print(y_test[id])
-        # print(vclf.predict(x_test)[id])
         ax2.imshow(mark_boundaries(temp, mask))
         ax1.axis('off')
+        ax1.set_title("Explanation for model with initial " + str(self.modelData["var"]) + ": " + str(self.modelData["ival"]))
         ax2.axis('off')
+        ax2.set_title("Explanation after varying " + str(self.modelData["var"]) + " to " + str(self.modelData["vals"][self.currentClf]))
         plt.show()
     
