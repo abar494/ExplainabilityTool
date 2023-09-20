@@ -136,12 +136,6 @@ class ImageLoader(QWidget):
             # self.confirmSelection.setEnabled(True) # This already gets enabled
 
 
-
-        # print(self.confirmSelection.isChecked())
-        # self.enable_layout(not checked, self.datasetDetails)
-        # self.enable_layout(not checked, self.datasetParams)
-        # self.continueNext.setEnabled(not checked)
-
     # Returns False if any of the parameters are NOT default values
     def params_default(self):
         

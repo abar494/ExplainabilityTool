@@ -29,33 +29,7 @@ class DataProcessor():
         self.var = prefs["var"]
         self.vals = prefs["vals"]
 
-        # self.catClassify()
         self.classify()
-
-    def catClassify(self):
-        fileList = glob.glob("Datasets/catdogpanda/*")
-        fileList = fileList[:100]       
-        x, labels = [], []
-
-        for fname in fileList:
-            img = resize(np.array(Image.open(fname)), (100, 100))
-            if img.shape != (100, 100, 3):
-                img = gray2rgb(img)
-            x.append(img)
-            animal = fname.split("_")[0].split("/")[-1]
-            labels.append(self.enumerate(animal, ['cats', 'dogs', 'panda']))
-        data = (255*np.stack(x)).astype(np.uint8)
-        self.pipes = [self.pipelineDict['Flatten Step']]
-        self.x_train, self.x_test, self.y_train, self.y_test = train_test_split(data, np.ravel(labels), train_size=0.8)
-        self.classify()
-
-    def enumerate(self, animal, animalList):
-        for i in range(len(animalList)):
-            if animal == animalList[i]:
-                return i
-
-    
-
 
     def classify(self):
         if len(np.unique(self.y_train)) < 2:
