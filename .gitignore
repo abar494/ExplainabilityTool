@@ -1,6 +1,6 @@
-Datasets/sampledata
-Datasets/animals
-Datasets/pickled
+Datasets/
 FrontEnd/src/__pycache__/
 FrontEnd/src/test.py
 FrontEnd/src/train_test_split.py
+testing/
+p4p/
