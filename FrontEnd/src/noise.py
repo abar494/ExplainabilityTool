@@ -1,9 +1,9 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QWidget, QStackedWidget, QGraphicsScene, QGraphicsPixmapItem, QGraphicsView
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QImage, QPixmap
+from PyQt6.QtWidgets import QApplication, QWidget, QStackedWidget, QGraphicsScene, QGraphicsPixmapItem, QGraphicsView
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QImage, QPixmap
 import cv2
-from PyQt5 import uic
+from PyQt6 import uic
 import createloader
 import main
 import classifierselect as clfSel
@@ -54,7 +54,7 @@ class Noise(QWidget):
 
             # Convert the resized image to QImage and display it in a QGraphicsPixmapItem
             q_image = QImage(resized_image.data, resized_image.shape[1], resized_image.shape[0],
-                             resized_image.shape[1] * 3, QImage.Format_RGB888)  # Use RGB888 format
+                             resized_image.shape[1] * 3, QImage.Format.Format_RGB888)  # Use RGB888 format
             pixmap = QPixmap.fromImage(q_image)
 
             # Clear the scene and add the pixmap item

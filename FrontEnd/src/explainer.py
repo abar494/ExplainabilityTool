@@ -1,8 +1,8 @@
 import main
 import gallery
-from PyQt5.QtWidgets import QWidget, QLabel, QPushButton, \
+from PyQt6.QtWidgets import QWidget, QLabel, QPushButton, \
     QVBoxLayout, QHBoxLayout, QSpacerItem, QSizePolicy, QRadioButton
-from PyQt5.QtGui import QFont, QPixmap
+from PyQt6.QtGui import QFont, QPixmap
 import matplotlib.pyplot as plt
 from lime import lime_image
 from lime.wrappers.scikit_image import SegmentationAlgorithm
@@ -45,18 +45,18 @@ class Explainer(QWidget):
             self.Vbox.setObjectName("Vbox")
 
             Hbox = QHBoxLayout()
-            spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            spacerItem = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
             Hbox.addItem(spacerItem)
             self.hpValue = QLabel(self.sliderLayout)
             self.hpValue.setObjectName("Name: " + str(i))
             self.hpValue.setText(str(val))
             Hbox.addWidget(self.hpValue)
-            spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            spacerItem = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
             Hbox.addItem(spacerItem)
             self.Vbox.addLayout(Hbox)
 
             Hbox = QHBoxLayout()
-            spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            spacerItem = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
             Hbox.addItem(spacerItem)
             self.valButton = QRadioButton(self.sliderLayout)
             self.valButton.setText("")
@@ -64,7 +64,7 @@ class Explainer(QWidget):
             self.valButton.clicked.connect(lambda: self.setCurrentClf())
 
             Hbox.addWidget(self.valButton)
-            spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            spacerItem = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
             Hbox.addItem(spacerItem)
             self.Vbox.addLayout(Hbox)
 

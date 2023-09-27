@@ -1,8 +1,8 @@
 import os
 from PIL import Image
-from PyQt5.QtWidgets import QFileDialog, QWidget, QVBoxLayout
-from PyQt5.QtCore import Qt
-from PyQt5 import uic
+from PyQt6.QtWidgets import QFileDialog, QWidget, QVBoxLayout
+from PyQt6.QtCore import Qt
+from PyQt6 import uic
 import numpy as np
 import cv2
 import main as main

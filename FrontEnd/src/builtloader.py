@@ -1,8 +1,8 @@
 import os
 from PIL import Image
-from PyQt5.QtWidgets import QFileDialog, QWidget, QVBoxLayout, QMessageBox
-from PyQt5.QtCore import Qt
-from PyQt5 import uic
+from PyQt6.QtWidgets import QFileDialog, QWidget, QVBoxLayout, QMessageBox
+from PyQt6.QtCore import Qt
+from PyQt6 import uic
 import shutil
 import random
 import numpy as np
@@ -12,7 +12,7 @@ import gallery
 # from dataset import Dataset, save_dataset_to_file
 
 class ImageLoader(QWidget):
-    def __init__(self, stack): # TODO: Add stack here later
+    def __init__(self, stack): 
         super().__init__()
         uic.loadUi("FrontEnd/UI/builtLoader.ui", self)
         self.initial_state()

@@ -1,13 +1,13 @@
-from PyQt5.QtWidgets import QWidget, QPushButton, QGridLayout, QGroupBox, QScrollArea, QVBoxLayout
-from PyQt5.QtWidgets import QAbstractButton, QLabel
+from PyQt6.QtWidgets import QWidget, QPushButton, QGridLayout, QGroupBox, QScrollArea, QVBoxLayout
+from PyQt6.QtWidgets import QAbstractButton, QLabel
 import main
 import classifierselect
 import builtloader
 import explainer
 import matplotlib.pyplot as plt
 from lime.wrappers.scikit_image import SegmentationAlgorithm
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QPixmap, QPainter, QFont
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QPixmap, QPainter, QFont
 from lime import lime_image
 # from keras.models import load_model
 from skimage.segmentation import mark_boundaries
@@ -75,7 +75,7 @@ class Gallery(QWidget):
         font = QFont()
         font.setPointSize(30)
         self.description.setFont(font)
-        self.description.setAlignment(Qt.AlignCenter)
+        self.description.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.description.setWordWrap(True)
 
         self.show()
