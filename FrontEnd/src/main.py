@@ -23,7 +23,7 @@ class MainMenu(QMainWindow):
         self.title = QLabel("ML-XplainEd", self)
         self.title.setGeometry(225, 40, 301, 61)
         font = QFont()
-        font.setPointSize(50)
+        font.setPointSize(30)
         font.setBold(True)
         self.title.setFont(font)
 
@@ -32,14 +32,14 @@ class MainMenu(QMainWindow):
             "key machine learning concepts!", self)
         self.description.setGeometry(130, 130, 461, 71)
         font = QFont()
-        font.setPointSize(22)
+        font.setPointSize(18)
         font.setBold(False)
         self.description.setFont(font)
         self.description.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.description.setWordWrap(True)
 
         font = QFont()
-        font.setPointSize(16)
+        font.setPointSize(12)
 
         self.builtIn = QPushButton("Built-in Models", self)
         self.builtIn.setGeometry(295, 230, 131, 32)
