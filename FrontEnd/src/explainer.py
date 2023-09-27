@@ -159,29 +159,31 @@ class Explainer(QWidget):
         )
 
 
+
         loaded_model = tf.keras.models.load_model("/home/caleb/Desktop/p4p/ExplainabilityTool/testing/first_keras_test.h5")
         # Print the model summary
         loaded_model.summary()
-        
+        def predict_fn(images):
+            return loaded_model.predict(images)
         # Select an image for explanation
         image = validation_generator[0][0][0]  # Replace with the image you want to explain
         # Explain the prediction
         explainer = lime_image.LimeImageExplainer(verbose = False) 
 
-        explanation = explainer.explain_instance(image, loaded_model.predict)
-        segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=200, ratio=0.2)
+        # explanation = explainer.explain_instance(image, loaded_model.predict)
+        # segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=200, ratio=0.2)
         explanation = explainer.explain_instance(image, 
-                                                 classifier_fn = loaded_model.predict, 
+                                                 classifier_fn = predict_fn, 
                                                  top_labels=10,
                                                  hide_color=0,
-                                                 num_samples=2000,
-                                                 segmentation_fn=segmenter)
+                                                 num_samples=2000)
+                                                #  segmentation_fn=segmenter)
 
         # Explain the prediction
         # explanation = explainer.explain_instance(image, predict_fn, top_labels=5, hide_color=0, num_samples=1000)
 
-        temp, mask = explanation.get_image_and_mask(explanation.top_labels[0], positive_only=False, num_features=10, hide_rest=False, min_weight=0.01)
-        plt.imshow(mark_boundaries(temp / 2 + 0.5, mask))
+        temp, mask = explanation.get_image_and_mask(explanation.top_labels[0], positive_only=False, num_features=10, hide_rest=False, min_weight=0.001)
+        plt.imshow(mark_boundaries(temp, mask))
         # temp, mask = explanation.get_image_and_mask(y_test[id], positive_only=False, num_features=10, hide_rest=False, min_weight = 0.01)
         # fig, (ax1, ax2) = plt.subplots(1,2, figsize = (8, 4))
         # ax1.imshow(mark_boundaries(temp, mask))
