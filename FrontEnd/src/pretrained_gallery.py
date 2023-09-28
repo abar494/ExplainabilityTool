@@ -3,6 +3,7 @@ import sys
 import cv2
 import lime
 import json
+import threading
 import numpy as np
 from PyQt6 import uic
 import tensorflow as tf
@@ -131,55 +132,57 @@ class ImageGallery(QWidget):
         scene_height = ((len(self.image_arrays) - 1) // col_count + 1) * 250  # Adjust as needed
         self.view.setSceneRect(0, 0, scene_width, scene_height)
 
-    # Slot to handle image click and receive the image index
     def handle_image_click(self, index):
-        image = self.image_arrays[index]
-        image = cv2.resize(image, (150, 150)) # This resize must be based on the model's first layer input size
+        # Define a function that will be run in a separate thread
+        def process_image():
+            image = self.image_arrays[index]
+            image = cv2.resize(image, (150, 150)) # This resize must be based on the model's first layer input size
 
-        # Reshape the image to match the input shape of the model
-        image = image.reshape(-1, 150, 150, 3)
+            # Reshape the image to match the input shape of the model
+            image = image.reshape(-1, 150, 150, 3)
 
-        segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=300, ratio=0.1)
+            segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=300, ratio=0.1)
 
-        # Verify image[0] is whole image
-        # plt.imshow(image[0])
-        # plt.show()
+            # Verify image[0] is whole image
+            # plt.imshow(image[0])
+            # plt.show()
 
-        explainer = lime_image.LimeImageExplainer(verbose=False)
+            explainer = lime_image.LimeImageExplainer(verbose=False)
 
+            validation_datagen = ImageDataGenerator(rescale=1.0/255.0)
 
-        validation_datagen = ImageDataGenerator(rescale=1.0/255.0)
+            validation_generator = validation_datagen.flow(
+                x = image,
+                batch_size=1
+            )
 
-        validation_generator = validation_datagen.flow(
-        x = image,
-        batch_size=1
-        )
+            explanation = explainer.explain_instance(
+                validation_generator[0][0], 
+                classifier_fn=self.loaded_model.predict,
+                top_labels=10,
+                hide_color=0,
+                num_samples=2000
+                # segmentation_fn= segmenter  
+            )
 
-        explanation = explainer.explain_instance(
-            validation_generator[0][0], 
-            classifier_fn=self.loaded_model.predict,
-            top_labels=10,
-            hide_color=0,
-            num_samples=2000
-            # segmentation_fn= segmenter  
-        )
+            temp, mask = explanation.get_image_and_mask(
+                explanation.top_labels[0],
+                positive_only=False,
+                num_features=10,  # Try reducing this
+                hide_rest=False,
+                min_weight=0.01  # Try increasing this
+            )
 
-        temp, mask = explanation.get_image_and_mask(
-            explanation.top_labels[0],
-            positive_only=False,
-            num_features=10,  # Try reducing this
-            hide_rest=False,
-            min_weight=0.01  # Try increasing this
-        )
+            plt.imshow(mark_boundaries(temp, mask))
+            plt.show()
 
-        plt.imshow(mark_boundaries(temp, mask))
-        plt.show()
+            print(self.loaded_model.predict(image))
+            print(f"Image Clicked! Index: {index}")
 
-        print(self.loaded_model.predict(image))
-        print(f"Image Clicked! Index: {index}")
+        # Create a separate thread and start it
+        thread = threading.Thread(target=process_image)
+        thread.start()
 
-    def predict_fn(images):
-        return self.loaded_model.predict(images)
         
 class MainWindow(QMainWindow):
     def __init__(self):
