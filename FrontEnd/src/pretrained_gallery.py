@@ -17,29 +17,35 @@ from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphi
 # default shows 50 images only.
 def load_images_from_directory(directory_path, num_images=50):
     image_arrays = []
-    count = 0
-    
-    # List all files in the directory
-    for filename in os.listdir(directory_path):
-        if count == num_images:
-            break
-        
-        if filename.endswith((".jpg", ".jpeg", ".png")):
-            file_path = os.path.join(directory_path, filename)
-            
-            # Read the image using OpenCV
-            image = cv2.imread(file_path)
-            
-            if image is not None:
-                # Convert the image to RGB format if it's in BGR format
-                if image.shape[2] == 3:
-                    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-                
-                # Append the image as a NumPy array to the list
-                image_arrays.append(image)
-                count += 1
+
+    # List all subdirectories in the directory
+    for subdir in os.listdir(directory_path):
+        subdir_path = os.path.join(directory_path, subdir)
+        if os.path.isdir(subdir_path):
+            count = 0
+
+            # List all files in the subdirectory
+            for filename in os.listdir(subdir_path):
+                if count == num_images:
+                    break
+
+                if filename.endswith((".jpg", ".jpeg", ".png")):
+                    file_path = os.path.join(subdir_path, filename)
+
+                    # Read the image using OpenCV
+                    image = cv2.imread(file_path)
+
+                    if image is not None:
+                        # Convert the image to RGB format if it's in BGR format
+                        if image.shape[2] == 3:
+                            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+                        # Append the image as a NumPy array to the list
+                        image_arrays.append(image)
+                        count += 1
     
     return image_arrays
+
 
 class ClickableImageHandler(QObject):
     clicked = pyqtSignal(int)  # Custom signal to emit the image index
@@ -182,7 +188,7 @@ class ImageGallery(QMainWindow):
 
 def main():
     # only load cat for prediction testing. don't care about other classes rn
-    image_directory = "/home/caleb/Desktop/p4p/ExplainabilityTool/Datasets/animals/cat"
+    image_directory = "/home/caleb/Desktop/p4p/ExplainabilityTool/Datasets/animals"
     image_arrays = load_images_from_directory(image_directory)
 
     app = QApplication(sys.argv)
