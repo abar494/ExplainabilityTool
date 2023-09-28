@@ -135,29 +135,39 @@ class ImageGallery(QMainWindow):
         # Reshape the image to match the input shape of the model
         image = image.reshape(-1, 150, 150, 3)
 
-        segmenter = SegmentationAlgorithm('quickshift', kernel_size=3, max_dist=200, ratio=0.2)
+        segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=300, ratio=0.1)
 
         # Verify image[0] is whole image
         # plt.imshow(image[0])
         # plt.show()
 
-        explainer = lime_image.LimeImageExplainer(verbose=False, kernel_width=1)
+        explainer = lime_image.LimeImageExplainer(verbose=False)
+
+
+        validation_datagen = ImageDataGenerator(rescale=1.0/255.0)
+
+        validation_generator = validation_datagen.flow(
+        x = image,
+        batch_size=1
+        )
+
+
 
         explanation = explainer.explain_instance(
-            image[0], # it is image[0] because image shape is (-1, 150, 150 3), getting image[0] ignores batch data (or whatever)
+            validation_generator[0][0], # it is image[0] because image shape is (-1, 150, 150 3), getting image[0] ignores batch data (or whatever)
             classifier_fn=self.loaded_model.predict,
-            top_labels=5,
+            top_labels=10,
             hide_color=0,
-            num_samples=1000,
-            segmentation_fn= segmenter  
+            num_samples=2000
+            # segmentation_fn= segmenter  
         )
 
         temp, mask = explanation.get_image_and_mask(
             explanation.top_labels[0],
             positive_only=False,
-            num_features=3,  # Try reducing this
+            num_features=10,  # Try reducing this
             hide_rest=False,
-            min_weight=0.01  # Try increasing this
+            min_weight=0.001  # Try increasing this
         )
 
         plt.imshow(mark_boundaries(temp, mask))
@@ -165,6 +175,9 @@ class ImageGallery(QMainWindow):
 
         print(self.loaded_model.predict(image))
         print(f"Image Clicked! Index: {index}")
+
+    def predict_fn(images):
+        return self.loaded_model.predict(images)
         
 
 def main():
