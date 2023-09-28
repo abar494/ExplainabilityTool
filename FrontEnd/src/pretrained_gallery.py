@@ -2,18 +2,22 @@ import os
 import sys
 import cv2
 import lime
+import json
 import numpy as np
+from PyQt6 import uic
 import tensorflow as tf
 from lime import lime_image
 import matplotlib.pyplot as plt
 from PyQt6.QtGui import QImage, QPixmap
 from tensorflow.keras.models import Sequential
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QObject
 from lime.wrappers.scikit_image import SegmentationAlgorithm
 from skimage.segmentation import slic, mark_boundaries, quickshift
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from PyQt6.QtCore import Qt, pyqtSignal, QSize, QObject
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
-from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QMainWindow, QVBoxLayout, QWidget, QGraphicsTextItem
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QCheckBox, QTextBrowser, QRadioButton, QStackedWidget, QPushButton
+from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QMainWindow, QVBoxLayout, QWidget, QGraphicsTextItem , QFileDialog
+
 # default shows 50 images only.
 def load_images_from_directory(directory_path, num_images=50):
     image_arrays = []
@@ -60,7 +64,7 @@ class ClickableImage(QGraphicsPixmapItem):
         self.setAcceptHoverEvents(True)
 
         # Create a QGraphicsTextItem for the label
-        self.label = QGraphicsTextItem("cat", self)
+        self.label = QGraphicsTextItem("cat", self) # Hardcoded cat for now
         self.label.setDefaultTextColor(Qt.GlobalColor.white)
         self.label.setPos(25, self.pixmap().height())  # Position the label below the image
 
@@ -82,8 +86,7 @@ class ClickableImage(QGraphicsPixmapItem):
     def mousePressEvent(self, event):
         # Emit the custom signal with the image index
         self.handler.clicked.emit(self.index)
-
-class ImageGallery(QMainWindow):
+class ImageGallery(QWidget):
     def __init__(self, image_arrays):
         super().__init__()
         self.image_arrays = image_arrays
@@ -93,10 +96,7 @@ class ImageGallery(QMainWindow):
         self.setWindowTitle("Pretrained Model - Image Gallery")
         self.setGeometry(100, 100, 800, 600)
 
-        central_widget = QWidget(self)
-        self.setCentralWidget(central_widget)
-
-        layout = QVBoxLayout(central_widget)
+        layout = QVBoxLayout(self)
 
         self.scene = QGraphicsScene()
         self.view = QGraphicsView(self.scene)
@@ -108,8 +108,6 @@ class ImageGallery(QMainWindow):
 
 
         self.load_images()
-
-
 
 
     def load_images(self):
@@ -157,10 +155,8 @@ class ImageGallery(QMainWindow):
         batch_size=1
         )
 
-
-
         explanation = explainer.explain_instance(
-            validation_generator[0][0], # it is image[0] because image shape is (-1, 150, 150 3), getting image[0] ignores batch data (or whatever)
+            validation_generator[0][0], 
             classifier_fn=self.loaded_model.predict,
             top_labels=10,
             hide_color=0,
@@ -173,7 +169,7 @@ class ImageGallery(QMainWindow):
             positive_only=False,
             num_features=10,  # Try reducing this
             hide_rest=False,
-            min_weight=0.001  # Try increasing this
+            min_weight=0.01  # Try increasing this
         )
 
         plt.imshow(mark_boundaries(temp, mask))
@@ -185,16 +181,114 @@ class ImageGallery(QMainWindow):
     def predict_fn(images):
         return self.loaded_model.predict(images)
         
+class MainWindow(QMainWindow):
+    def __init__(self):
+        super().__init__()
+
+        self.setWindowTitle("Pretrained Main")
+        self.setGeometry(100, 100, 800, 600)
+
+        # Create a central widget to hold the stacked views
+        self.central_widget = QWidget()
+        self.setCentralWidget(self.central_widget)
+
+        # Create a stacked widget to manage multiple views
+        self.stacked_widget = QStackedWidget()
+        self.central_layout = QVBoxLayout(self.central_widget)
+        self.central_layout.addWidget(self.stacked_widget)        
+        # Create and add views to the stacked widget
+        self.dir = "/home/caleb/Desktop/p4p/ExplainabilityTool/my_misc/JSONs"
+        self.image_array = load_images_from_directory("/home/caleb/Desktop/p4p/ExplainabilityTool/Datasets/animals", 10)
+        self.view1 = SelectJson(self.dir)
+        self.view2 = ImageGallery(self.image_array)
+        self.stacked_widget.addWidget(self.view1)
+        self.stacked_widget.addWidget(self.view2)
+
+        # Create buttons to switch between views
+        self.button1 = QPushButton("View 1")
+        self.button2 = QPushButton("View 2")
+        self.button1.clicked.connect(self.show_view1)
+        self.button2.clicked.connect(self.show_view2)
+
+        # Create a horizontal layout for the buttons
+        self.button_layout = QVBoxLayout()
+        self.button_layout.addWidget(self.button1)
+        self.button_layout.addWidget(self.button2)
+
+        # Add the button layout to the central widget
+        self.central_layout.addLayout(self.button_layout)
+
+    def show_view1(self):
+        self.stacked_widget.setCurrentWidget(self.view1)
+
+    def show_view2(self):
+        self.stacked_widget.setCurrentWidget(self.view2)
+
+
+class SelectJson(QWidget):
+    def __init__(self, directory):
+        super().__init__()
+        self.directory = directory
+        self.setup_ui()
+
+    def setup_ui(self):
+        self.setWindowTitle("JSON File Viewer")
+        self.widget = QWidget()
+        self.layout = QVBoxLayout(self.widget)
+        self.setLayout(self.layout)
+
+        json_data = self.read_json_files()
+        self.radio_buttons = []
+
+        for filename, data in json_data.items():
+            radio_button = QRadioButton(filename)  # Use QRadioButton instead of QCheckBox
+            self.layout.addWidget(radio_button)
+            self.radio_buttons.append((radio_button, data))
+            radio_button.toggled.connect(lambda state, data=data: self.display_json(state, data))
+
+        self.text_browser = QTextBrowser()
+        self.layout.addWidget(self.text_browser)
+
+    def read_json_files(self):
+        json_data = {}
+        for filename in os.listdir(self.directory):
+            if filename.endswith(".json"):
+                filepath = os.path.join(self.directory, filename)
+                with open(filepath) as file:
+                    data = json.load(file)
+                    json_data[filename] = data
+        return json_data
+
+    def display_json(self, state, data):
+        if state:
+            self.text_browser.clear()
+            self.text_browser.append(json.dumps(data, indent=4))
+        else:
+            self.text_browser.clear()
 
 def main():
     # only load cat for prediction testing. don't care about other classes rn
-    image_directory = "/home/caleb/Desktop/p4p/ExplainabilityTool/Datasets/animals"
-    image_arrays = load_images_from_directory(image_directory)
-
+    # image_directory = "/home/caleb/Desktop/p4p/ExplainabilityTool/Datasets/animals"
+    # image_arrays = load_images_from_directory(image_directory)
+ 
+    # app = QApplication(sys.argv)
+    # # gallery = ImageGallery(image_arrays)
+    # # gallery.show()
+    # dir = "/home/caleb/Desktop/p4p/ExplainabilityTool/my_misc/JSONs" # will need to be changed.
+    # selectJson = SelectJson(dir)
+    # selectJson.show() 
+    # sys.exit(app.exec())
+    # if __name__ == "__main__":
     app = QApplication(sys.argv)
-    gallery = ImageGallery(image_arrays)
-    gallery.show()
+    window = MainWindow()
+    window.show()
     sys.exit(app.exec())
 
-if __name__ == "__main__":
+if __name__ == "__main__": 
     main()
+# if __name__ == "__main__":
+#     app = QApplication([])
+#     directory = "/home/caleb/Desktop/p4p/ExplainabilityTool/my_misc/JSONs"
+#     my_app = MyApp(directory)
+#     my_app.show()
+#     app.exec()
