@@ -19,13 +19,20 @@ from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QCheckBox, QTextBrowser, QRadioButton, QStackedWidget, QPushButton
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QMainWindow, QVBoxLayout, QWidget, QGraphicsTextItem , QFileDialog
 
-# default shows 50 images only.
 def load_images_from_directory(directory_path, num_images=50):
     image_arrays = []
+    class_labels = []
+
+    # Check if the directory exists
+    if not os.path.exists(directory_path):
+        print(f"Directory '{directory_path}' does not exist.")
+        return image_arrays, class_labels
 
     # List all subdirectories in the directory
     for subdir in os.listdir(directory_path):
         subdir_path = os.path.join(directory_path, subdir)
+
+        # Check if it's a directory
         if os.path.isdir(subdir_path):
             count = 0
 
@@ -34,7 +41,7 @@ def load_images_from_directory(directory_path, num_images=50):
                 if count == num_images:
                     break
 
-                if filename.endswith((".jpg", ".jpeg", ".png")):
+                if filename.lower().endswith((".jpg", ".jpeg", ".png")):
                     file_path = os.path.join(subdir_path, filename)
 
                     # Read the image using OpenCV
@@ -47,25 +54,30 @@ def load_images_from_directory(directory_path, num_images=50):
 
                         # Append the image as a NumPy array to the list
                         image_arrays.append(image)
+                        class_labels.append(subdir)  # Add the class label
                         count += 1
-    
-    return image_arrays
+
+    return image_arrays, class_labels
+
+
+
 
 
 class ClickableImageHandler(QObject):
     clicked = pyqtSignal(int)  # Custom signal to emit the image index
 
 class ClickableImage(QGraphicsPixmapItem):
-    def __init__(self, image_np, index, parent=None):
+    def __init__(self, image_np, index, label, parent=None):
         super().__init__(parent)
         self.handler = ClickableImageHandler()
         self.image_np = image_np
+        self.label = label
         self.index = index  # Store the image index
         self.setPixmap(self.numpy_array_to_pixmap(image_np))
         self.setAcceptHoverEvents(True)
 
         # Create a QGraphicsTextItem for the label
-        self.label = QGraphicsTextItem("cat", self) # Hardcoded cat for now
+        self.label = QGraphicsTextItem(str(self.label), self) # Hardcoded cat for now
         self.label.setDefaultTextColor(Qt.GlobalColor.white)
         self.label.setPos(25, self.pixmap().height())  # Position the label below the image
 
@@ -88,9 +100,10 @@ class ClickableImage(QGraphicsPixmapItem):
         # Emit the custom signal with the image index
         self.handler.clicked.emit(self.index)
 class ImageGallery(QWidget):
-    def __init__(self, image_arrays):
+    def __init__(self, image_arrays, label_arrays):
         super().__init__()
         self.image_arrays = image_arrays
+        self.label_arrays = label_arrays
         self.initUI()
 
     def initUI(self):
@@ -103,9 +116,10 @@ class ImageGallery(QWidget):
         self.view = QGraphicsView(self.scene)
         layout.addWidget(self.view)
 
-        self.loaded_model = tf.keras.models.load_model("/home/caleb/Desktop/p4p/ExplainabilityTool/testing/first_keras_test.h5") # Get this from keras.ipynb
+        self.loaded_model = tf.keras.models.load_model("/home/caleb/Desktop/p4p/ExplainabilityTool/my_misc/keras_models/seccond_keras_test.h5") # Get this from keras.ipynb
         # Print the model summary
         self.loaded_model.summary()
+
 
 
         self.load_images()
@@ -117,7 +131,7 @@ class ImageGallery(QWidget):
 
         for i, image_np in enumerate(self.image_arrays):
             image_np = cv2.resize(image_np, (150,150)) # this resize only effects visual size on gallery
-            clickable_image = ClickableImage(image_np, i)  # Pass the image index
+            clickable_image = ClickableImage(image_np, i, self.label_arrays[i])  # Pass the image index
             col = i % col_count
             row = i // col_count
             clickable_image.setPos(col * 250, row * 250)  # Adjust position as needed
@@ -134,54 +148,77 @@ class ImageGallery(QWidget):
 
     def handle_image_click(self, index):
         # Define a function that will be run in a separate thread
-        def process_image():
-            image = self.image_arrays[index]
-            image = cv2.resize(image, (150, 150)) # This resize must be based on the model's first layer input size
+        # def process_image():
+        image = self.image_arrays[index]
+        image = cv2.resize(image, (150, 150)) # This resize must be based on the model's first layer input size
 
-            # Reshape the image to match the input shape of the model
-            image = image.reshape(-1, 150, 150, 3)
+        # Reshape the image to match the input shape of the model
+        image = image.reshape(-1, 150, 150, 3)
 
-            segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=300, ratio=0.1)
+        segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=300, ratio=0.1)
 
-            # Verify image[0] is whole image
-            # plt.imshow(image[0])
-            # plt.show()
+        # Verify image[0] is whole image
+        # plt.imshow(image[0])
+        # plt.show()
 
-            explainer = lime_image.LimeImageExplainer(verbose=False)
+        explainer = lime_image.LimeImageExplainer(verbose=False)
 
-            validation_datagen = ImageDataGenerator(rescale=1.0/255.0)
+        validation_datagen = ImageDataGenerator(rescale=1.0/255.0)
 
-            validation_generator = validation_datagen.flow(
-                x = image,
-                batch_size=1
-            )
+        validation_generator = validation_datagen.flow(
+            x = image,
+            batch_size=1
+        )
 
-            explanation = explainer.explain_instance(
-                validation_generator[0][0], 
-                classifier_fn=self.loaded_model.predict,
-                top_labels=10,
-                hide_color=0,
-                num_samples=2000
-                # segmentation_fn= segmenter  
-            )
+        explanation = explainer.explain_instance(
+            validation_generator[0][0], 
+            classifier_fn=self.loaded_model.predict,
+            top_labels=10,
+            hide_color=0,
+            num_samples=1000,
+            random_seed=1
+            
+            # segmentation_fn= segmenter  
 
-            temp, mask = explanation.get_image_and_mask(
-                explanation.top_labels[0],
-                positive_only=False,
-                num_features=10,  # Try reducing this
-                hide_rest=False,
-                min_weight=0.01  # Try increasing this
-            )
+        )
 
-            plt.imshow(mark_boundaries(temp, mask))
-            plt.show()
+        temp, mask = explanation.get_image_and_mask(
+            explanation.top_labels[0],
+            positive_only=False,
+            num_features=10,  # Try reducing this
+            hide_rest=False,
+            min_weight=0.01  # Try increasing this
+        )
 
-            print(self.loaded_model.predict(image))
-            print(f"Image Clicked! Index: {index}")
 
-        # Create a separate thread and start it
-        thread = threading.Thread(target=process_image)
-        thread.start()
+        predictions = self.loaded_model.predict(image)
+
+        # Interpret the predictions
+        predicted_class = np.argmax(predictions)  # Get the index of the highest probability
+        predicted_probability = predictions[0, predicted_class]  # Probability of the predicted class
+
+        # Now, you can map the predicted class index to its label or name
+        class_labels = ['dog', 'cat', 'panda']  # List of class labels
+        predicted_label = class_labels[predicted_class]
+
+        print(f"Predicted Class: {predicted_label}")
+        print(f"Predicted Probability: {predicted_probability}")
+
+        truncated_probability = round(predicted_probability*100, 2)
+
+        plt.imshow(mark_boundaries(temp, mask))
+        plt.title(f"Model Predicted: {predicted_label} with {truncated_probability}% confidence  - Explainer predicted: {class_labels[explanation.top_labels[0]]}  ")
+        plt.show()
+
+
+
+        print("TESTING ", explanation.top_labels[0])
+        # print(self.loaded_model.predict(image))
+        print(f"Image Clicked! Index: {index}")
+
+        # # Create a separate thread and start it
+        # thread = threading.Thread(target=process_image)
+        # thread.start()
 
         
 class MainWindow(QMainWindow):
@@ -201,15 +238,15 @@ class MainWindow(QMainWindow):
         self.central_layout.addWidget(self.stacked_widget)        
         # Create and add views to the stacked widget
         self.dir = "/home/caleb/Desktop/p4p/ExplainabilityTool/my_misc/JSONs"
-        self.image_array = load_images_from_directory("/home/caleb/Desktop/p4p/ExplainabilityTool/Datasets/animals", 10)
+        self.image_array, self.label_array = load_images_from_directory("/home/caleb/Desktop/p4p/ExplainabilityTool/Datasets/keras_datasets/test", 50)
         self.view1 = SelectJson(self.dir)
-        self.view2 = ImageGallery(self.image_array)
+        self.view2 = ImageGallery(self.image_array, self.label_array)
         self.stacked_widget.addWidget(self.view1)
         self.stacked_widget.addWidget(self.view2)
 
         # Create buttons to switch between views
-        self.button1 = QPushButton("View 1")
-        self.button2 = QPushButton("View 2")
+        self.button1 = QPushButton("Json")
+        self.button2 = QPushButton("Gallery")
         self.button1.clicked.connect(self.show_view1)
         self.button2.clicked.connect(self.show_view2)
 
