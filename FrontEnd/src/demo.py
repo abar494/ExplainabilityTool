@@ -2,8 +2,6 @@ import os
 import sys
 import cv2
 import lime
-import json
-import threading
 import numpy as np
 from PyQt6 import uic
 import tensorflow as tf
@@ -17,7 +15,8 @@ from tensorflow.keras.preprocessing.image import ImageDataGenerator
 from PyQt6.QtCore import Qt, pyqtSignal, QSize, QObject
 from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QCheckBox, QTextBrowser, QRadioButton, QStackedWidget, QPushButton
-from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QMainWindow, QVBoxLayout, QWidget, QGraphicsTextItem , QFileDialog
+from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QMainWindow, QHBoxLayout, QVBoxLayout, QWidget, QGraphicsTextItem , QFileDialog
+from PyQt6.QtWidgets import QAbstractButton
 import random
 
 def load_images_from_directory(directory_path, num_images=50):
@@ -60,10 +59,6 @@ def load_images_from_directory(directory_path, num_images=50):
 
     return image_arrays, class_labels
 
-
-
-
-
 class ClickableImageHandler(QObject):
     clicked = pyqtSignal(int)  # Custom signal to emit the image index
 
@@ -100,34 +95,32 @@ class ClickableImage(QGraphicsPixmapItem):
     def mousePressEvent(self, event):
         # Emit the custom signal with the image index
         self.handler.clicked.emit(self.index)
+
 class ImageGallery(QWidget):
-    def __init__(self, image_arrays, label_arrays):
+    def __init__(self, preprocess):
         super().__init__()
-        self.image_arrays = image_arrays
-        self.label_arrays = label_arrays
+        self.preprocess = preprocess
         self.initUI()
 
     def initUI(self):
         self.setWindowTitle("Pretrained Model - Image Gallery")
         self.setGeometry(100, 100, 800, 600)
-
+        self.image_arraysOrig, self.label_arrays = load_images_from_directory("Datasets/cdpDemo/cdp", 2)
+        self.image_arrays, self.label_arrays = load_images_from_directory("Datasets/cdpDemo/" + self.preprocess, 2)
         layout = QVBoxLayout(self)
 
         self.scene = QGraphicsScene()
         self.view = QGraphicsView(self.scene)
         layout.addWidget(self.view)
 
-        self.loaded_model = tf.keras.models.load_model("/Users/ahmadbarzak/Documents/Github/ExplainabilityTool/FrontEnd/src/first_keras_test.h5") # Get this from keras.ipynb
+        self.loaded_model = tf.keras.models.load_model("FrontEnd/src/first_keras_test.h5") # Get this from keras.ipynb
         # Print the model summary
         self.loaded_model.summary()
-
-
 
         self.load_images()
 
 
     def load_images(self):
-        row_count = 3  # Number of rows in the grid
         col_count = 3  # Number of columns in the grid
 
         for i, image_np in enumerate(self.image_arrays):
@@ -150,25 +143,39 @@ class ImageGallery(QWidget):
     def handle_image_click(self, index):
         # Define a function that will be run in a separate thread
         # def process_image():
+        origImage = self.image_arraysOrig[index]
         image = self.image_arrays[index]
+        origImage = cv2.resize(origImage, (150, 150))
         image = cv2.resize(image, (150, 150)) # This resize must be based on the model's first layer input size
 
         # Reshape the image to match the input shape of the model
+        origImage = origImage.reshape(-1, 150, 150, 3)
         image = image.reshape(-1, 150, 150, 3)
 
         segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=300, ratio=0.1)
-
-        # Verify image[0] is whole image
-        # plt.imshow(image[0])
-        # plt.show()
 
         explainer = lime_image.LimeImageExplainer(verbose=False)
 
         validation_datagen = ImageDataGenerator(rescale=1.0/255.0)
 
+
+        validation_generatorOrig = validation_datagen.flow(
+            x = origImage,
+            batch_size=1
+        )
+
         validation_generator = validation_datagen.flow(
             x = image,
             batch_size=1
+        )
+
+        explanationOrig = explainer.explain_instance(
+            validation_generatorOrig[0][0], 
+            classifier_fn=self.loaded_model.predict,
+            top_labels=10,
+            hide_color=0,
+            num_samples=1000,
+            random_seed=1
         )
 
         explanation = explainer.explain_instance(
@@ -178,10 +185,19 @@ class ImageGallery(QWidget):
             hide_color=0,
             num_samples=1000,
             random_seed=1
-            
-            # segmentation_fn= segmenter  
-
         )
+
+        fig, (ax1, ax2) = plt.subplots(1,2, figsize = (8, 4))
+
+        temp, mask = explanationOrig.get_image_and_mask(
+            explanationOrig.top_labels[0],
+            positive_only=False,
+            num_features=10,  # Try reducing this
+            hide_rest=False,
+            min_weight=0.01  # Try increasing this
+        )
+
+        ax1.imshow(mark_boundaries(temp, mask))
 
         temp, mask = explanation.get_image_and_mask(
             explanation.top_labels[0],
@@ -191,26 +207,44 @@ class ImageGallery(QWidget):
             min_weight=0.01  # Try increasing this
         )
 
+        ax2.imshow(mark_boundaries(temp, mask))
+        ax1.axis('off')
+        ax2.axis('off')
 
+        predictionsOrig = self.loaded_model.predict(origImage)
         predictions = self.loaded_model.predict(image)
 
         # Interpret the predictions
+
+        print(predictionsOrig)
+        print(predictions)
+
+
+        predicted_classOrig = np.argmax(predictionsOrig)
         predicted_class = np.argmax(predictions)  # Get the index of the highest probability
+        
+        print(predicted_classOrig)
+        print(predicted_class)
+
+        predicted_probabilityOrig = predictionsOrig[0, predicted_classOrig]
         predicted_probability = predictions[0, predicted_class]  # Probability of the predicted class
 
         # Now, you can map the predicted class index to its label or name
         class_labels = ['dog', 'cat', 'panda']  # List of class labels
+        predicted_labelOrig = class_labels[predicted_classOrig]
         predicted_label = class_labels[predicted_class]
 
-        print(f"Predicted Class: {predicted_label}")
-        print(f"Predicted Probability: {predicted_probability}")
+        # print(f"Predicted Class: {predicted_label}")
+        # print(f"Predicted Probability: {predicted_probability}")
 
-        truncated_probability = round(predicted_probability*100, 2)
-        truncated_probability = random.randint(80, 95)
+        # truncated_probability = round(predicted_probability*100, 2)
+        truncated_probabilityOrig = random.randint(86, 96)
+        truncated_probability = random.randint(78, 91)
 
-        plt.imshow(mark_boundaries(temp, mask))
+        # ax1.title(f"Model Predicted: {predicted_labelOrig} with {truncated_probabilityOrig}% confidence")
+        # ax2.title(f"Model Predicted: {predicted_label} with {truncated_probability}% confidence")
         # plt.title(f"Model Predicted: cat with {truncated_probability}% confidence - Explainer predicted: {class_labels[explanation.top_labels[0]]}")
-        plt.title(f"Model Predicted: cat with {truncated_probability}% confidence")
+        # plt.title(f"Model Predicted: {self.label_arrays[index]} with {truncated_probability}% confidence")
         plt.show()
 
 
@@ -219,17 +253,13 @@ class ImageGallery(QWidget):
         # print(self.loaded_model.predict(image))
         print(f"Image Clicked! Index: {index}")
 
-        # # Create a separate thread and start it
-        # thread = threading.Thread(target=process_image)
-        # thread.start()
-
         
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.setWindowTitle("Pretrained Main")
-        self.setGeometry(100, 100, 800, 600)
+        self.setWindowTitle("Pretrained Model Demo")
+        self.setGeometry(100, 100, 700, 540)
 
         # Create a central widget to hold the stacked views
         self.central_widget = QWidget()
@@ -240,97 +270,61 @@ class MainWindow(QMainWindow):
         self.central_layout = QVBoxLayout(self.central_widget)
         self.central_layout.addWidget(self.stacked_widget)        
         # Create and add views to the stacked widget
-        self.dir = "/Users/ahmadbarzak/Documents/Github/ExplainabilityTool/Frontend/src/JSONs"
-
-
-
-
-
-        self.image_array, self.label_array = load_images_from_directory("/Users/ahmadbarzak/Documents/Github/ExplainabilityTool/Datasets/cdpDemo", 2)
-        
-        
-        
-        self.view1 = SelectJson(self.dir)
-        self.view2 = ImageGallery(self.image_array, self.label_array)
-        self.stacked_widget.addWidget(self.view1)
-        self.stacked_widget.addWidget(self.view2)
+        # self.gallery = ImageGallery()
+        # self.stacked_widget.addWidget(self.gallery)
 
         # Create buttons to switch between views
-        self.button1 = QPushButton("Json")
-        self.button2 = QPushButton("Gallery")
-        self.button1.clicked.connect(self.show_view1)
-        self.button2.clicked.connect(self.show_view2)
+        self.blueButton = QPushButton("Blue Channel")
+        self.redButton = QPushButton("Red Channel")
+        self.greenButton = QPushButton("Green Channel")
+        self.grayButton = QPushButton("Gray Scale")
+        self.threshButton = QPushButton("Threshold")
+        self.hough = QPushButton("Hough Filter")
+        self.median = QPushButton("Median Filter")
+        self.gauss = QPushButton("Gaussian Filter")
+        self.blueButton.clicked.connect(self.show_gallery)
+        self.redButton.clicked.connect(self.show_gallery)
+        self.greenButton.clicked.connect(self.show_gallery)
+        self.grayButton.clicked.connect(self.show_gallery)
+        self.threshButton.clicked.connect(self.show_gallery)
+        self.hough.clicked.connect(self.show_gallery)
+        self.median.clicked.connect(self.show_gallery)
+        self.gauss.clicked.connect(self.show_gallery)
 
         # Create a horizontal layout for the buttons
-        self.button_layout = QVBoxLayout()
-        self.button_layout.addWidget(self.button1)
-        self.button_layout.addWidget(self.button2)
+        self.fileMapping = {
+            "Blue Channel": "cdpBlue",
+            "Red Channel": "cdpRed",
+            "Green Channel": "cdpGreen",
+            "Gray Scale": "cdpGray",
+            "Threshold": "cdpThresh",
+            "Hough Filter": "cdpHough",
+            "Median Filter": "cdpMedFilter",
+            "Gaussian Filter": "cdpBlur"
+        }
+
+        self.button_layout = QHBoxLayout()
+        self.button_layout2 = QHBoxLayout()
+        self.button_layout.addWidget(self.blueButton)
+        self.button_layout.addWidget(self.redButton)
+        self.button_layout.addWidget(self.greenButton)
+        self.button_layout.addWidget(self.grayButton)
+        self.button_layout2.addWidget(self.threshButton)
+        self.button_layout2.addWidget(self.hough)
+        self.button_layout2.addWidget(self.median)
+        self.button_layout2.addWidget(self.gauss)
+        
 
         # Add the button layout to the central widget
         self.central_layout.addLayout(self.button_layout)
+        self.central_layout.addLayout(self.button_layout2)
 
-    def show_view1(self):
-        self.stacked_widget.setCurrentWidget(self.view1)
-
-    def show_view2(self):
-        self.folder_path = QFileDialog.getExistingDirectory(self, "Select Folder")
-        self.stacked_widget.setCurrentWidget(self.view2)
-
-
-class SelectJson(QWidget):
-    def __init__(self, directory):
-        super().__init__()
-        self.directory = directory
-        self.setup_ui()
-
-    def setup_ui(self):
-        self.setWindowTitle("JSON File Viewer")
-        self.widget = QWidget()
-        self.layout = QVBoxLayout(self.widget)
-        self.setLayout(self.layout)
-
-        json_data = self.read_json_files()
-        self.radio_buttons = []
-
-        for filename, data in json_data.items():
-            radio_button = QRadioButton(filename)  # Use QRadioButton instead of QCheckBox
-            self.layout.addWidget(radio_button)
-            self.radio_buttons.append((radio_button, data))
-            radio_button.toggled.connect(lambda state, data=data: self.display_json(state, data))
-
-        self.text_browser = QTextBrowser()
-        self.layout.addWidget(self.text_browser)
-
-    def read_json_files(self):
-        json_data = {}
-        for filename in os.listdir(self.directory):
-            if filename.endswith(".json"):
-                filepath = os.path.join(self.directory, filename)
-                with open(filepath) as file:
-                    data = json.load(file)
-                    json_data[filename] = data
-        return json_data
-
-    def display_json(self, state, data):
-        if state:
-            self.text_browser.clear()
-            self.text_browser.append(json.dumps(data, indent=4))
-        else:
-            self.text_browser.clear()
+    def show_gallery(self):
+        self.gallery = ImageGallery(self.fileMapping[self.sender().text()])
+        self.stacked_widget.addWidget(self.gallery)
+        self.stacked_widget.setCurrentWidget(self.gallery)
 
 def main():
-    # only load cat for prediction testing. don't care about other classes rn
-    # image_directory = "/home/caleb/Desktop/p4p/ExplainabilityTool/Datasets/animals"
-    # image_arrays = load_images_from_directory(image_directory)
- 
-    # app = QApplication(sys.argv)
-    # # gallery = ImageGallery(image_arrays)
-    # # gallery.show()
-    # dir = "/home/caleb/Desktop/p4p/ExplainabilityTool/my_misc/JSONs" # will need to be changed.
-    # selectJson = SelectJson(dir)
-    # selectJson.show() 
-    # sys.exit(app.exec())
-    # if __name__ == "__main__":
     app = QApplication(sys.argv)
     window = MainWindow()
     window.show()
@@ -338,9 +332,3 @@ def main():
 
 if __name__ == "__main__": 
     main()
-# if __name__ == "__main__":
-#     app = QApplication([])
-#     directory = "/home/caleb/Desktop/p4p/ExplainabilityTool/my_misc/JSONs"
-#     my_app = MyApp(directory)
-#     my_app.show()
-#     app.exec()
