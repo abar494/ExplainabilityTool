@@ -3,10 +3,9 @@ import shutil
 import sys
 import createloader
 import builtloader
-from PyQt5.QtGui import QFont
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QPushButton, QLabel, QMainWindow, \
-    QStackedWidget, QMessageBox
+from PyQt6.QtGui import QFont
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QApplication, QPushButton, QLabel, QMainWindow, QStackedWidget, QMessageBox
 
 
 def transition(stack, context):
@@ -18,15 +17,13 @@ def transition(stack, context):
 
 class MainMenu(QMainWindow):
     def __init__(self, stack, parent=None):
-        # Sets labels etc
-        super(MainMenu, self).__init__()
-
-
+        super().__init__(parent)
+        
         #Title
         self.title = QLabel("ML-XplainEd", self)
         self.title.setGeometry(225, 40, 301, 61)
         font = QFont()
-        font.setPointSize(50)
+        font.setPointSize(30)
         font.setBold(True)
         self.title.setFont(font)
 
@@ -35,14 +32,14 @@ class MainMenu(QMainWindow):
             "key machine learning concepts!", self)
         self.description.setGeometry(130, 130, 461, 71)
         font = QFont()
-        font.setPointSize(22)
+        font.setPointSize(18)
         font.setBold(False)
         self.description.setFont(font)
-        self.description.setAlignment(Qt.AlignCenter)
+        self.description.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.description.setWordWrap(True)
 
         font = QFont()
-        font.setPointSize(16)
+        font.setPointSize(12)
 
         self.builtIn = QPushButton("Built-in Models", self)
         self.builtIn.setGeometry(295, 230, 131, 32)
@@ -57,27 +54,27 @@ class MainMenu(QMainWindow):
         self.exit.setFont(font)
 
         self.build.clicked.connect(
-            # lambda: transition(stack, classifierselect.ClassifierSelect(stack)))
             lambda: transition(stack, createloader.ImageLoader(stack)))
         self.builtIn.clicked.connect(
             lambda: transition(stack, builtloader.ImageLoader(stack)))
-        self.exit.clicked.connect(
-            self.close_app)
+        self.exit.clicked.connect(self.close_app)
         
         self.show()
 
     def close_app(self):
         reply = QMessageBox.question(self, 'Message', 'Are you sure to quit?',
-                                     QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
+                                     QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
 
-        if reply == QMessageBox.Yes:        QApplication.quit()
-        else:                               QMessageBox.Close
-
+        if reply == QMessageBox.StandardButton.Yes:
+            QApplication.quit()
+        else:
+            QMessageBox.Close
 
     def print_size(self):
         # Get the current window size
         window_size = self.size()
         print("Window size:", window_size.width(), "x", window_size.height())
+
 
 if __name__ == "__main__":
     if not os.path.isdir("Datasets/sampledata"):
@@ -88,15 +85,12 @@ if __name__ == "__main__":
     widget.addWidget(mainMenu)
     widget.resize(733, 464)
 
-
     # Read the style.qss file
     with open('FrontEnd/UI/style.qss', 'r') as f:
         style_sheet = f.read()
 
     widget.setStyleSheet(style_sheet)
-    # widget.setFixedHeight(500)
-    # widget.setFixedWidth(600)
     widget.show()
-    ret = app.exec_()
+    ret = app.exec()
     shutil.rmtree('Datasets/sampledata')
     sys.exit(ret)

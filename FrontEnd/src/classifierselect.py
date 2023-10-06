@@ -1,10 +1,10 @@
-from PyQt5.QtWidgets import QWidget, QComboBox, QLineEdit, QLabel, QPushButton, \
+from PyQt6.QtWidgets import QWidget, QComboBox, QLineEdit, QLabel, QPushButton, \
       QSpacerItem, QHBoxLayout, QSizePolicy, QRadioButton, QVBoxLayout
 import main
 import gallery
 import createloader
 import dataprocessor
-from PyQt5.QtGui import QFont
+from PyQt6.QtGui import QFont
 import json
   
 
@@ -46,7 +46,7 @@ class ClassifierSelect(QWidget):
             self.clfHbox = QHBoxLayout()
             self.clfLab = QLabel(clf, self.step1Space)
             self.clfHbox.addWidget(self.clfLab)
-            spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            spacerItem = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
             self.clfHbox.addItem(spacerItem)
             self.clfRb = QRadioButton(self.step1Space)
             self.clfRb.setText("")
@@ -63,7 +63,7 @@ class ClassifierSelect(QWidget):
 
         #Add step 2 label to vbox
         hbox = QHBoxLayout()
-        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         hbox.addItem(spacerItem)
         self.step2Lab = QLabel(self.step2Space)
         font = QFont()
@@ -72,7 +72,7 @@ class ClassifierSelect(QWidget):
         self.step2Lab.setFont(font)
         self.step2Lab.setText("Step 2: Select your hyperparameters:")
         hbox.addWidget(self.step2Lab)
-        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         hbox.addItem(spacerItem)
         self.step2Vbox.addLayout(hbox)
 
@@ -90,7 +90,7 @@ class ClassifierSelect(QWidget):
             hbox = QHBoxLayout()
             lb = QLabel("Param:", self.step2Space)
             hbox.addWidget(lb)
-            spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            spacerItem = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
             hbox.addItem(spacerItem)
             self.hpLab = QLabel(self.step2Space)
             self.hpLab.setObjectName("hp" + str(i) + "Lab")
@@ -103,7 +103,7 @@ class ClassifierSelect(QWidget):
             hbox = QHBoxLayout()
             lb = QLabel("Value:", self.step2Space)
             hbox.addWidget(lb)
-            spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            spacerItem = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
             hbox.addItem(spacerItem)
             self.hpComb = QComboBox(self.step2Space)
             self.hpComb.setObjectName("hp" + str(i) + "Comb")
@@ -116,7 +116,7 @@ class ClassifierSelect(QWidget):
             hbox = QHBoxLayout()
             lb = QLabel("Custom:", self.step2Space)
             hbox.addWidget(lb)
-            spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+            spacerItem = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
             hbox.addItem(spacerItem)
             self.hpCustLab = QLabel("N/A", self.step2Space)
             self.hpCustLab.setObjectName("hp" + str(i) + "CustLab")
@@ -138,7 +138,7 @@ class ClassifierSelect(QWidget):
         self.VarHpLab = QLabel(self.step2Space)
         self.VarHpLab.setText("Variable Hyperparameter")
         self.VarHpComb = QComboBox(self.step2Space)
-        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         
         #Add variable hyperparameter selection to to Step 2 vbox
         self.VarHpHbox.addWidget(self.VarHpLab)
