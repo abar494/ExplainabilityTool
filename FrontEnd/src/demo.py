@@ -18,10 +18,12 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QCh
 from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QMainWindow, QHBoxLayout, QVBoxLayout, QWidget, QGraphicsTextItem , QFileDialog
 from PyQt6.QtWidgets import QAbstractButton
 import random
+from PIL import Image, ImageOps  # Install pillow instead of PIL
 
 def load_images_from_directory(directory_path, num_images=50):
     image_arrays = []
     class_labels = []
+    file_paths = []
 
     # Check if the directory exists
     if not os.path.exists(directory_path):
@@ -43,7 +45,6 @@ def load_images_from_directory(directory_path, num_images=50):
 
                 if filename.lower().endswith((".jpg", ".jpeg", ".png")):
                     file_path = os.path.join(subdir_path, filename)
-
                     # Read the image using OpenCV
                     image = cv2.imread(file_path)
 
@@ -52,12 +53,13 @@ def load_images_from_directory(directory_path, num_images=50):
                         if image.shape[2] == 3:
                             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
+                        file_paths.append(file_path)
                         # Append the image as a NumPy array to the list
                         image_arrays.append(image)
                         class_labels.append(subdir)  # Add the class label
                         count += 1
 
-    return image_arrays, class_labels
+    return image_arrays, class_labels, file_paths
 
 class ClickableImageHandler(QObject):
     clicked = pyqtSignal(int)  # Custom signal to emit the image index
@@ -105,15 +107,16 @@ class ImageGallery(QWidget):
     def initUI(self):
         self.setWindowTitle("Pretrained Model - Image Gallery")
         self.setGeometry(100, 100, 800, 600)
-        self.image_arraysOrig, self.label_arrays = load_images_from_directory("Datasets/cdpDemo/cdp", 2)
-        self.image_arrays, self.label_arrays = load_images_from_directory("Datasets/cdpDemo/" + self.preprocess, 2)
+        self.image_arraysOrig, self.label_arrays, self.file_pathsOrig = load_images_from_directory("Datasets/cdpDemo/cdp", 2)
+        self.image_arrays, self.label_arrays, self.file_paths = load_images_from_directory("Datasets/cdpDemo/" + self.preprocess, 2)
         layout = QVBoxLayout(self)
 
         self.scene = QGraphicsScene()
         self.view = QGraphicsView(self.scene)
         layout.addWidget(self.view)
 
-        self.loaded_model = tf.keras.models.load_model("FrontEnd/src/first_keras_test.h5") # Get this from keras.ipynb
+        self.loaded_model = tf.keras.models.load_model("KerasModels/Teachable10x.h5") # Get this from keras.ipynb
+        
         # Print the model summary
         self.loaded_model.summary()
 
@@ -124,7 +127,7 @@ class ImageGallery(QWidget):
         col_count = 3  # Number of columns in the grid
 
         for i, image_np in enumerate(self.image_arrays):
-            image_np = cv2.resize(image_np, (150,150)) # this resize only effects visual size on gallery
+            image_np = cv2.resize(image_np, (224,224)) # this resize only effects visual size on gallery
             clickable_image = ClickableImage(image_np, i, self.label_arrays[i])  # Pass the image index
             col = i % col_count
             row = i // col_count
@@ -143,16 +146,70 @@ class ImageGallery(QWidget):
     def handle_image_click(self, index):
         # Define a function that will be run in a separate thread
         # def process_image():
-        origImage = self.image_arraysOrig[index]
-        image = self.image_arrays[index]
-        origImage = cv2.resize(origImage, (150, 150))
-        image = cv2.resize(image, (150, 150)) # This resize must be based on the model's first layer input size
+
+
+
+
+        # Load the labels
+        class_names = open("KerasModels/labels.txt", "r").readlines()
+
+        # Create the array of the right shape to feed into the keras model
+        # The 'length' or number of images you can put into the array is
+        # determined by the first position in the shape tuple, in this case 1
+        dataOrig = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
+        data = np.ndarray(shape=(1, 224, 224, 3), dtype=np.float32)
+
+        # Replace this with the path to your image
+        imageOrig = Image.open(self.file_pathsOrig[index]).convert("RGB")
+        image = Image.open(self.file_paths[index]).convert("RGB")
+
+        # resizing the image to be at least 224x224 and then cropping from the center
+        size = (224, 224)
+        imageOrig = ImageOps.fit(imageOrig, size, Image.Resampling.LANCZOS)
+        image = ImageOps.fit(image, size, Image.Resampling.LANCZOS)
+
+        # turn the image into a numpy array
+        image_arrayOrig = np.asarray(imageOrig)
+        image_array = np.asarray(image)
+
+        # Normalize the image
+        normalized_image_arrayOrig = (image_arrayOrig.astype(np.float32) / 127.5) - 1
+        normalized_image_array = (image_array.astype(np.float32) / 127.5) - 1
+
+        # Load the image into the array
+        dataOrig[0] = normalized_image_arrayOrig
+        data[0] = normalized_image_array
+
+        # Predicts the model
+        predictionOrig = self.loaded_model.predict(dataOrig)
+        prediction = self.loaded_model.predict(data)
+
+        class_nameOrig = class_names[np.argmax(predictionOrig)].split(" ")[1]
+        class_name = class_names[np.argmax(prediction)].split(" ")[1]
+
+        confidence_scoreOrig = predictionOrig[0][np.argmax(predictionOrig)]
+        confidence_score = prediction[0][np.argmax(prediction)]
+
+        # Print prediction and confidence score
+
+        print("Class:", class_name[2:], end="")
+        print("Confidence Score:", confidence_scoreOrig)
+
+        print("Class:", class_name[2:], end="")
+        print("Modified Confidence Score:", confidence_score)
+
+
+
+        xorigImage = self.image_arraysOrig[index]
+        ximage = self.image_arrays[index]
+        xorigImage = cv2.resize(xorigImage, (224, 224))
+        ximage = cv2.resize(ximage, (224, 224)) # This resize must be based on the model's first layer input size
 
         # Reshape the image to match the input shape of the model
-        origImage = origImage.reshape(-1, 150, 150, 3)
-        image = image.reshape(-1, 150, 150, 3)
+        xorigImage = xorigImage.reshape(-1, 224, 224, 3)
+        ximage = ximage.reshape(-1, 224, 224, 3)
 
-        segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=300, ratio=0.1)
+        # segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=300, ratio=0.1)
 
         explainer = lime_image.LimeImageExplainer(verbose=False)
 
@@ -160,12 +217,12 @@ class ImageGallery(QWidget):
 
 
         validation_generatorOrig = validation_datagen.flow(
-            x = origImage,
+            x = xorigImage,
             batch_size=1
         )
 
         validation_generator = validation_datagen.flow(
-            x = image,
+            x = ximage,
             batch_size=1
         )
 
@@ -211,43 +268,14 @@ class ImageGallery(QWidget):
         ax1.axis('off')
         ax2.axis('off')
 
-        predictionsOrig = self.loaded_model.predict(origImage)
-        predictions = self.loaded_model.predict(image)
+        truncated_confidenceOrig= round(confidence_scoreOrig*100, 2)
+        truncated_confidence = round(confidence_score*100, 2)
 
-        # Interpret the predictions
-
-        print(predictionsOrig)
-        print(predictions)
-
-
-        predicted_classOrig = np.argmax(predictionsOrig)
-        predicted_class = np.argmax(predictions)  # Get the index of the highest probability
         
-        print(predicted_classOrig)
-        print(predicted_class)
+        ax1.set_title(f"Predicted: {class_nameOrig}, {truncated_confidenceOrig}% confidence")
+        ax2.set_title(f"Predicted: {class_name}, {truncated_confidence}% confidence")
 
-        predicted_probabilityOrig = predictionsOrig[0, predicted_classOrig]
-        predicted_probability = predictions[0, predicted_class]  # Probability of the predicted class
-
-        # Now, you can map the predicted class index to its label or name
-        class_labels = ['dog', 'cat', 'panda']  # List of class labels
-        predicted_labelOrig = class_labels[predicted_classOrig]
-        predicted_label = class_labels[predicted_class]
-
-        # print(f"Predicted Class: {predicted_label}")
-        # print(f"Predicted Probability: {predicted_probability}")
-
-        # truncated_probability = round(predicted_probability*100, 2)
-        truncated_probabilityOrig = random.randint(86, 96)
-        truncated_probability = random.randint(78, 91)
-
-        # ax1.title(f"Model Predicted: {predicted_labelOrig} with {truncated_probabilityOrig}% confidence")
-        # ax2.title(f"Model Predicted: {predicted_label} with {truncated_probability}% confidence")
-        # plt.title(f"Model Predicted: cat with {truncated_probability}% confidence - Explainer predicted: {class_labels[explanation.top_labels[0]]}")
-        # plt.title(f"Model Predicted: {self.label_arrays[index]} with {truncated_probability}% confidence")
         plt.show()
-
-
 
         print("TESTING ", explanation.top_labels[0])
         # print(self.loaded_model.predict(image))

@@ -67,8 +67,8 @@ def gaussBlur(img, dir, filename):
     blur = cv2.GaussianBlur(img, (5,5), 7)
     writeDir(blur, dir, filename)
 
-dir = "Datasets/cdpDemo"
-for filename in os.listdir(dir):
+dir = "Datasets/ProcessedImages/"
+for filename in os.listdir(dir + "cdp"):
     if filename == 'dogs' or filename == 'cats' or filename == 'pandas':
         folder = filename
         for filename in os.listdir(dir + "/cdp/" + folder):
