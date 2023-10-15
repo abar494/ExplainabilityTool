@@ -8,13 +8,13 @@ import cv2
 import main as main
 import noise
 from sklearn.model_selection import train_test_split as train_test_split_sklearn
-# from dataset import Dataset, save_dataset_to_file
+
 
 class ImageLoader(QWidget):
     def __init__(self, stack): # TODO: Add stack here later
         super().__init__()
         uic.loadUi("FrontEnd/UI/createLoader.ui", self)
-        self.default_split = 60 # This is the default split for the train/test sliders
+        self.default_split = 80 # This is the default split for the train/test sliders
         # Initialise initial states
         self.initial_state()
         self.connect_all()
@@ -211,6 +211,9 @@ class ImageLoader(QWidget):
                         subdirectories += 1
                         # Count the number of images within each subdirectory
                         subdirectory_path = os.path.join(folder_directory, entry.name)
+                       
+                        image_formats = [".jpg", ".jpeg", ".png", ".jfif"] # Add more image formats here if needed
+                       
                         images = [
                             name
                             for name in os.listdir(subdirectory_path)
@@ -219,6 +222,11 @@ class ImageLoader(QWidget):
 
                         for image_name in images:
                             image_path = os.path.join(subdirectory_path, image_name)
+                            
+                            file_ext = os.path.splitext(image_path)[1].lower()
+                            if file_ext not in image_formats:
+                                continue
+
                             image = Image.open(image_path)
                             width, height = image.size
 
@@ -338,6 +346,12 @@ class ImageLoader(QWidget):
         # Get a list of class names from subdirectories    
         class_list = os.listdir(root_dir)
 
+        if class_list.__contains__('.DS_Store'):
+            class_list.remove('.DS_Store') # Remove the .DS_Store file from the list for MAC users
+
+
+        self.label_map = {}
+
         self.num_class_labels = []
         for i in range(len(self.label)):
             self.num_class_labels.append(self.enumerate(self.label[i], class_list))
@@ -345,12 +359,19 @@ class ImageLoader(QWidget):
 
         self.x_train, self.x_test, self.y_train , self.y_test = train_test_split_sklearn(self.data, self.num_class_labels, test_size=test_size)  
         # Dictionary to store the data for use in proceeding pages
+
+        print(self.y_test)
+
+
         self.data_dict = { "x_train": self.x_train,
                             "x_test": self.x_test,
                             "y_train": self.y_train,
-                            "y_test": self.y_test  }
+                            "y_test": self.y_test,
+                            "label_map": self.label_map  }
     
     def enumerate(self, label, label_list):
         for i in range(len(label_list)):
             if label == label_list[i]:
+                if label not in self.label_map:
+                    self.label_map[i] = label
                 return i

@@ -178,6 +178,7 @@ class ClassifierSelect(QWidget):
             for val in self.hps[hp]:
                 com.addItem(val)
             i+=1
+        self.VarHpComb.addItem("None")
         self.accept.show()
         self.show()
 
@@ -220,14 +221,21 @@ class ClassifierSelect(QWidget):
                         else:
                             self.params[hpName] = float(obj.text())
                         break
-        vals = self.hps[self.VarHpComb.currentText()]
-        if "Custom" in vals:
-            vals.remove("Custom")
-            vals = [int(val) for val in vals]
+        varHpText = self.VarHpComb.currentText()
+        if varHpText == "None":
+            var = None
+            vals = None
+        else:
+            vals = self.hps[self.VarHpComb.currentText()]
+        
+            if "Custom" in vals:
+                vals.remove("Custom")
+                vals = [int(val) for val in vals]
+
         prefs = {
             "hps": self.params,
             "clf": self.call,
-            "var": self.VarHpComb.currentText(),
+            "var": var,
             "vals": vals
         }
 
@@ -241,6 +249,7 @@ class ClassifierSelect(QWidget):
             "clfs": dp.clfs,
             "ival": dp.ival,
             "vals": dp.vals,
-            "var": dp.var
+            "var": dp.var,
+            "label_map": self.modelData["label_map"]
         }
         main.transition(self.stack, gallery.Gallery(self.stack, self.modelData, True))

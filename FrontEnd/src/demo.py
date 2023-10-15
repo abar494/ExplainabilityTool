@@ -101,7 +101,8 @@ class ClickableImage(QGraphicsPixmapItem):
 class ImageGallery(QWidget):
     def __init__(self, preprocess):
         super().__init__()
-        self.preprocess = preprocess
+        self.preprocess = preprocess[0]
+        self.updatedModel = tf.keras.models.load_model("KerasModels/keras_" + preprocess[1] + ".h5")
         self.initUI()
 
     def initUI(self):
@@ -115,7 +116,7 @@ class ImageGallery(QWidget):
         self.view = QGraphicsView(self.scene)
         layout.addWidget(self.view)
 
-        self.loaded_model = tf.keras.models.load_model("KerasModels/Teachable10x.h5") # Get this from keras.ipynb
+        self.loaded_model = tf.keras.models.load_model("KerasModels/regKeras500.h5") # Get this from keras.ipynb
         
         # Print the model summary
         self.loaded_model.summary()
@@ -182,7 +183,8 @@ class ImageGallery(QWidget):
 
         # Predicts the model
         predictionOrig = self.loaded_model.predict(dataOrig)
-        prediction = self.loaded_model.predict(data)
+        prediction = self.updatedModel.predict(data)
+        # prediction = self.loaded_model.predict(data)
 
         class_nameOrig = class_names[np.argmax(predictionOrig)].split(" ")[1]
         class_name = class_names[np.argmax(prediction)].split(" ")[1]
@@ -237,7 +239,7 @@ class ImageGallery(QWidget):
 
         explanation = explainer.explain_instance(
             validation_generator[0][0], 
-            classifier_fn=self.loaded_model.predict,
+            classifier_fn=self.updatedModel.predict,
             top_labels=10,
             hide_color=0,
             num_samples=1000,
@@ -321,14 +323,14 @@ class MainWindow(QMainWindow):
 
         # Create a horizontal layout for the buttons
         self.fileMapping = {
-            "Blue Channel": "cdpBlue",
-            "Red Channel": "cdpRed",
-            "Green Channel": "cdpGreen",
-            "Gray Scale": "cdpGray",
-            "Threshold": "cdpThresh",
-            "Hough Filter": "cdpHough",
-            "Median Filter": "cdpMedFilter",
-            "Gaussian Filter": "cdpBlur"
+            "Blue Channel": ["cdpBlue", "blue"],
+            "Red Channel": ["cdpRed", "red"],
+            "Green Channel": ["cdpGreen", "green"],
+            "Gray Scale": ["cdpGray", "gray"],
+            "Threshold": ["cdpThresh", "thresh"],
+            "Hough Filter": ["cdpHough", "hough"],
+            "Median Filter": ["cdpMedFilter", "med"],
+            "Gaussian Filter": ["cdpGaussBlur", "gauss"]
         }
 
         self.button_layout = QHBoxLayout()

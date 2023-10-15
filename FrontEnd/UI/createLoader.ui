@@ -29,7 +29,7 @@
   <widget class="QLabel" name="label">
    <property name="geometry">
     <rect>
-     <x>180</x>
+     <x>230</x>
      <y>-10</y>
      <width>321</width>
      <height>81</height>
@@ -115,7 +115,7 @@
      <x>10</x>
      <y>150</y>
      <width>246</width>
-     <height>115</height>
+     <height>118</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="datasetDetails">
@@ -123,7 +123,6 @@
      <widget class="QLabel" name="label_8">
       <property name="font">
        <font>
-        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>
@@ -221,7 +220,7 @@
      <x>290</x>
      <y>150</y>
      <width>281</width>
-     <height>207</height>
+     <height>210</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="datasetParams">
@@ -229,7 +228,6 @@
      <widget class="QLabel" name="label_18">
       <property name="font">
        <font>
-        <weight>75</weight>
         <bold>true</bold>
        </font>
       </property>

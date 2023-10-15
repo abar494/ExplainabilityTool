@@ -64,23 +64,32 @@ def medFilter(img, dir, filename):
     writeDir(median, dir, filename)
 
 def gaussBlur(img, dir, filename):
-    blur = cv2.GaussianBlur(img, (5,5), 7)
+    blur = cv2.GaussianBlur(img, (7,7), 7)
     writeDir(blur, dir, filename)
 
-dir = "Datasets/ProcessedImages/"
+
+count = 1
+# dir = "Datasets/ProcessedImages/"
+dir = "Datasets/cdpDemo/"
 for filename in os.listdir(dir + "cdp"):
     if filename == 'dogs' or filename == 'cats' or filename == 'pandas':
         folder = filename
         for filename in os.listdir(dir + "/cdp/" + folder):
+            if filename == '.DS_Store':
+                continue
             img = cv2.imread(os.path.join(dir + "/cdp/" + folder, filename))
-            blue(img, dir + "cdpBlue/", filename)
-            red(img, dir + "cdpRed/", filename)
-            green(img, dir + "cdpGreen/", filename)
-            gray(img, dir + "cdpGray/", filename)
-            thresh(img, dir + "cdpThresh/", filename)
-            hough(img, dir + "cdpHough/", filename)
-            medFilter(img, dir + "cdpMedFilter/", filename)
+            # blue(img, dir + "cdpBlue/", filename)
+            # red(img, dir + "cdpRed/", filename)
+            # green(img, dir + "cdpGreen/", filename)
+            # gray(img, dir + "cdpGray/", filename)
+            # thresh(img, dir + "cdpThresh/", filename)
+            # hough(img, dir + "cdpHough/", filename)
+            # medFilter(img, dir + "cdpMedFilter/", filename)
             gaussBlur(img, dir + "cdpGaussBlur/", filename)
+            print(count)
+            count += 1
         continue
     else:
         continue
+
+print("done")

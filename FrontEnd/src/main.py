@@ -8,6 +8,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QPushButton, QLabel, QMainWindow, QStackedWidget, QMessageBox
 
 
+# Method which allows for transition between different views of Prototype 2
 def transition(stack, context):
     stack.addWidget(context)
     next_index = stack.currentIndex()
@@ -15,13 +16,14 @@ def transition(stack, context):
     stack.setCurrentIndex(next_index)
 
 
+# Main Menu for Prototype 2, allows basic selection between built-in models and custom models
 class MainMenu(QMainWindow):
     def __init__(self, stack, parent=None):
         super().__init__(parent)
         
         #Title
         self.title = QLabel("ML-XplainEd", self)
-        self.title.setGeometry(225, 40, 301, 61)
+        self.title.setGeometry(270, 40, 301, 61)
         font = QFont()
         font.setPointSize(30)
         font.setBold(True)
@@ -61,6 +63,7 @@ class MainMenu(QMainWindow):
         
         self.show()
 
+    # Method which allows for the closing of the application
     def close_app(self):
         reply = QMessageBox.question(self, 'Message', 'Are you sure to quit?',
                                      QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, QMessageBox.StandardButton.No)
@@ -70,15 +73,15 @@ class MainMenu(QMainWindow):
         else:
             QMessageBox.Close
 
-    def print_size(self):
-        # Get the current window size
-        window_size = self.size()
-        print("Window size:", window_size.width(), "x", window_size.height())
 
-
+# Main method which runs the application
 if __name__ == "__main__":
+
+    # Create a sampledata folder to store later test images
     if not os.path.isdir("Datasets/sampledata"):
         os.mkdir("Datasets/sampledata")
+
+    # Create the application
     app = QApplication(sys.argv)
     widget = QStackedWidget()
     mainMenu = MainMenu(widget)

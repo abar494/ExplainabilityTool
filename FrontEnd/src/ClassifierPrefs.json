@@ -8,7 +8,7 @@
         }
     },
     "Support Vector Machine": {
-        "call": "SVC",
+        "call": "sklearn.svm.SVC",
         "hps": {
             "C": ["1", "2", "3", "5", "Custom"],
             "kernel": ["linear", "poly", "rbf"],

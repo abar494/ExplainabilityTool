@@ -47,9 +47,9 @@
   <widget class="QWidget" name="horizontalLayoutWidget">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>70</y>
-     <width>301</width>
+     <x>30</x>
+     <y>120</y>
+     <width>261</width>
      <height>41</height>
     </rect>
    </property>
@@ -83,24 +83,11 @@
     </item>
    </layout>
   </widget>
-  <widget class="QPushButton" name="resetData">
-   <property name="geometry">
-    <rect>
-     <x>360</x>
-     <y>100</y>
-     <width>71</width>
-     <height>25</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Reset</string>
-   </property>
-  </widget>
   <widget class="QPushButton" name="continueNext">
    <property name="geometry">
     <rect>
-     <x>530</x>
-     <y>360</y>
+     <x>500</x>
+     <y>310</y>
      <width>89</width>
      <height>25</height>
     </rect>
@@ -112,8 +99,8 @@
   <widget class="QWidget" name="verticalLayoutWidget_7">
    <property name="geometry">
     <rect>
-     <x>60</x>
-     <y>200</y>
+     <x>350</x>
+     <y>130</y>
      <width>246</width>
      <height>118</height>
     </rect>
@@ -217,28 +204,13 @@
   <widget class="QWidget" name="verticalLayoutWidget_8">
    <property name="geometry">
     <rect>
-     <x>340</x>
-     <y>200</y>
+     <x>30</x>
+     <y>220</y>
      <width>281</width>
-     <height>131</height>
+     <height>41</height>
     </rect>
    </property>
    <layout class="QVBoxLayout" name="datasetParams">
-    <item>
-     <widget class="QLabel" name="label_18">
-      <property name="font">
-       <font>
-        <bold>true</bold>
-       </font>
-      </property>
-      <property name="text">
-       <string>Edit dataset parameters:</string>
-      </property>
-      <property name="alignment">
-       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-      </property>
-     </widget>
-    </item>
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_3">
       <item>
@@ -247,13 +219,6 @@
          <widget class="QLabel" name="label_3">
           <property name="text">
            <string>Maximum Images per class:</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QLabel" name="label_5">
-          <property name="text">
-           <string>Resize Image (x, y):</string>
           </property>
          </widget>
         </item>
@@ -271,35 +236,7 @@
           </property>
          </widget>
         </item>
-        <item>
-         <widget class="QSpinBox" name="resizeXY">
-          <property name="maximum">
-           <number>100000</number>
-          </property>
-          <property name="singleStep">
-           <number>10</number>
-          </property>
-         </widget>
-        </item>
        </layout>
-      </item>
-     </layout>
-    </item>
-    <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_6">
-      <item>
-       <widget class="QPushButton" name="resetParams">
-        <property name="text">
-         <string>Reset</string>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <widget class="QCheckBox" name="confirmSelection">
-        <property name="text">
-         <string>Confirm Selection</string>
-        </property>
-       </widget>
       </item>
      </layout>
     </item>
@@ -308,8 +245,8 @@
   <widget class="QLabel" name="label_19">
    <property name="geometry">
     <rect>
-     <x>560</x>
-     <y>300</y>
+     <x>420</x>
+     <y>290</y>
      <width>9</width>
      <height>17</height>
     </rect>
@@ -321,9 +258,9 @@
   <widget class="QWidget" name="horizontalLayoutWidget_2">
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>120</y>
-     <width>301</width>
+     <x>30</x>
+     <y>170</y>
+     <width>261</width>
      <height>41</height>
     </rect>
    </property>
@@ -354,6 +291,32 @@
        </size>
       </property>
      </spacer>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QWidget" name="">
+   <property name="geometry">
+    <rect>
+     <x>170</x>
+     <y>290</y>
+     <width>325</width>
+     <height>59</height>
+    </rect>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout_6">
+    <item>
+     <widget class="QPushButton" name="resetParams">
+      <property name="text">
+       <string>Reset</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QCheckBox" name="confirmSelection">
+      <property name="text">
+       <string>Confirm Selection</string>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>

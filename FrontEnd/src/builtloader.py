@@ -14,7 +14,11 @@ import gallery
 class ImageLoader(QWidget):
     def __init__(self, stack): 
         super().__init__()
+
+        # Load the UI Page
         uic.loadUi("FrontEnd/UI/builtLoader.ui", self)
+
+        # Initialise layout, buttons and instantiate variables
         self.initial_state()
         self.connect_all()
         self.stack = stack
@@ -37,27 +41,22 @@ class ImageLoader(QWidget):
         self.total_images = None # 0
         self.largest_image = None #(0, 0)
         self.smallest_image = None #(float("inf"), float("inf"))
-        self.max_images = 0
-        self.resize_xy = 0
+        self.max_images = 25
         self.dataSelected = False
         self.modelSelected = False
         # User defined parameters
-        self.resizeXY.setValue(0)
         self.maxImages.setValue(0)
         # self.reset_params()
 
         # Set initial layouts and buttons to disabled
         self.enable_layout(False, self.datasetDetails)
         self.enable_layout(False, self.datasetParams)
-        self.resetData.setEnabled(False)
         self.continueNext.setEnabled(False)
 
     # Connect all buttons/sliders/spinboxes to their respective functions
     def connect_all(self):
         self.selectDir.clicked.connect(self.select_folder)
         self.selectMod.clicked.connect(self.select_model)
-        self.resetData.clicked.connect(self.reset_data)
-        self.resizeXY.valueChanged.connect(self.update_spins)
         self.maxImages.valueChanged.connect(self.update_spins)
         self.confirmSelection.clicked.connect(self.confirm_selection)
         self.resetParams.clicked.connect(self.reset_params)
@@ -65,6 +64,8 @@ class ImageLoader(QWidget):
         self.back.clicked.connect(lambda: main.transition(self.stack, main.MainMenu(self.stack)))
         # self.resetParams.clicked.connect(self.test_buttons)
 
+
+    # Update the information about the selected folder
     def load_data_continue(self):
         self.load_dataset_from_dir()
 
@@ -87,6 +88,7 @@ class ImageLoader(QWidget):
         main.transition(self.stack, gallery.Gallery(self.stack, self.modelData, False))
 
 
+    # Update the sample data folder with up to 120 test images
     def sample(self, numSamples):
         folder = "Datasets/sampledata/"
         for filename in os.listdir(folder):
@@ -103,30 +105,28 @@ class ImageLoader(QWidget):
             im = Image.fromarray(self.x_test[i])
             im.save("Datasets/sampledata/"+str(i)+".png")
 
-
+    # Update context values upon signal
     def update_spins(self):
         
-        if self.sender() == self.resizeXY:
-            self.resize_xy = self.resizeXY.value()
-        else:
-            self.max_images = self.maxImages.value()
-
+        # if self.sender() == self.resizeXY:
+        #     self.resize_xy = self.resizeXY.value()
+        # else:
+        self.max_images = self.maxImages.value()
         
         self.resetParams.setEnabled(not self.params_default())       
 
+
     # If confirm selection is checked, enable continue button
     def confirm_selection(self):
+
         # Enable buttons and layouts.
         checked = self.confirmSelection.isChecked() 
-        
-
         if checked == True: #and self.params_default() == False:
             # self.confirmSelection.setEnabled(not checked)
             self.continueNext.setEnabled(True)
             self.enable_layout(False, self.datasetParams)
             self.enable_layout(False, self.datasetDetails)
             self.confirmSelection.setEnabled(True) # This is needed to enable the checkbox because it is inside the datasetParams layout above
-
         else:
             self.continueNext.setEnabled(False)
             self.enable_layout(True, self.datasetParams)
@@ -137,9 +137,7 @@ class ImageLoader(QWidget):
     # Returns False if any of the parameters are NOT default values
     def params_default(self):
         
-        if( (self.maxImages.value()) != 0 or
-            (self.resizeXY.value() != 0)
-           ):
+        if self.maxImages.value() != 0:
             return False
         else:
             return True
@@ -161,7 +159,6 @@ class ImageLoader(QWidget):
     # Reset all parameters to their default values
     def reset_params(self):
         self.maxImages.setValue(0)
-        self.resizeXY.setValue(0)
         # Disable reset param button
         self.resetParams.setEnabled(False)
 
@@ -187,7 +184,6 @@ class ImageLoader(QWidget):
             if self.dataSelected and self.modelSelected:
                 self.enable_layout(True, self.datasetDetails)
                 self.enable_layout(True, self.datasetParams)
-                self.resetData.setEnabled(True)
 
         # Select folder containing dataset
     def select_model(self):
@@ -209,26 +205,9 @@ class ImageLoader(QWidget):
                 if self.dataSelected and self.modelSelected:
                     self.enable_layout(True, self.datasetDetails)
                     self.enable_layout(True, self.datasetParams)
-                    self.resetData.setEnabled(True)
             else:
                 # Show an error message if the selected file is not an .h5 file
                 QMessageBox.critical(self, "Invalid File", "Please select a valid .h5 model file.")
-
-
-
-        # model_path = QFileDialog.getExistingDirectory(self, "Select Model")
-        # # This handles situations where the user cancels the file dialog.
-        # if model_path:
-        #     self.model_name = os.path.basename(model_path)
-        #     self.model_path = model_path
-        #     self.update_model_info()
-        #     # Enable buttons and layouts.
-        #     self.modelSelected = True
-        #     if self.dataSelected and self.modelSelected:
-        #         self.enable_layout(True, self.datasetDetails)
-        #         self.enable_layout(True, self.datasetParams)
-        #         self.resetData.setEnabled(True)
-
 
     # Helper function to disable and enable items in a given layout. Ideal for parent layouts
     def enable_layout(self, enable=True, layout=None):
@@ -258,6 +237,9 @@ class ImageLoader(QWidget):
                         subdirectories += 1
                         # Count the number of images within each subdirectory
                         subdirectory_path = os.path.join(folder_directory, entry.name)
+
+                        image_formats = [".jpg", ".jpeg", ".png", ".jfif"] # Add more image formats here if needed
+
                         images = [
                             name
                             for name in os.listdir(subdirectory_path)
@@ -266,6 +248,11 @@ class ImageLoader(QWidget):
 
                         for image_name in images:
                             image_path = os.path.join(subdirectory_path, image_name)
+                            
+                            file_ext = os.path.splitext(image_path)[1].lower()
+                            if file_ext not in image_formats:
+                                continue
+
                             image = Image.open(image_path)
                             width, height = image.size
 
@@ -318,7 +305,8 @@ class ImageLoader(QWidget):
 
         root_dir = self.folder_directory
         limit = self.max_images
-        target_size = (self.resize_xy, self.resize_xy)
+        # target_size = (self.resize_xy, self.resize_xy)
+        target_size = (500,500)
 
         # Iterate through each subdirectory in the root directory
         for class_name in os.listdir(root_dir):
@@ -390,9 +378,8 @@ class ImageLoader(QWidget):
         # Dictionary to store the data for use in proceeding pages
 
     
-    def enumerate(self, animal, animalList):
-        for i in range(len(animalList)):
-            if animal == animalList[i]:
+    def enumerate(self, class_name, classList):
+        for i in range(len(classList)):
+            if class_name == classList[i]:
                 return i
-
      
