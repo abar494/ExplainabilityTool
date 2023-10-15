@@ -6,7 +6,7 @@ import cv2
 from PyQt6 import uic
 import createloader
 import main
-import classifierselect as clfSel
+import classifierselect
 
 
 class Noise(QWidget):
@@ -102,7 +102,7 @@ class Noise(QWidget):
                 self.apply_blur_to_dataset("x_test")
                 # Send data to classifer select
 
-        main.transition(self.stack, clfSel.ClassifierSelect(self.stack, self.data_dict))
+        main.transition(self.stack, classifierselect.ClassifierSelect(self.stack, self.data_dict))
 
 
     # Based on the key input string, apply noise to dataset. 

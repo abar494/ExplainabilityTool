@@ -7,9 +7,8 @@ import shutil
 import random
 import numpy as np
 import cv2
-import main as main
+import main
 import gallery
-# from dataset import Dataset, save_dataset_to_file
 
 class ImageLoader(QWidget):
     def __init__(self, stack): 

@@ -227,7 +227,7 @@ class ClassifierSelect(QWidget):
             vals = None
         else:
             vals = self.hps[self.VarHpComb.currentText()]
-        
+            var = self.VarHpComb.currentText()
             if "Custom" in vals:
                 vals.remove("Custom")
                 vals = [int(val) for val in vals]

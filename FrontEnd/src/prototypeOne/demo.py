@@ -1,23 +1,17 @@
 import os
 import sys
 import cv2
-import lime
 import numpy as np
-from PyQt6 import uic
 import tensorflow as tf
 from lime import lime_image
 import matplotlib.pyplot as plt
 from PyQt6.QtGui import QImage, QPixmap
-from tensorflow.keras.models import Sequential
-from lime.wrappers.scikit_image import SegmentationAlgorithm
-from skimage.segmentation import slic, mark_boundaries, quickshift
+from skimage.segmentation import mark_boundaries
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from PyQt6.QtCore import Qt, pyqtSignal, QSize, QObject
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QCheckBox, QTextBrowser, QRadioButton, QStackedWidget, QPushButton
-from PyQt6.QtWidgets import QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QMainWindow, QHBoxLayout, QVBoxLayout, QWidget, QGraphicsTextItem , QFileDialog
-from PyQt6.QtWidgets import QAbstractButton
-import random
+from PyQt6.QtCore import Qt, pyqtSignal, QObject
+from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QStackedWidget, \
+    QPushButton, QApplication, QGraphicsView, QGraphicsScene, QGraphicsPixmapItem, QMainWindow, \
+    QHBoxLayout, QVBoxLayout, QWidget, QGraphicsTextItem
 from PIL import Image, ImageOps  # Install pillow instead of PIL
 
 def load_images_from_directory(directory_path, num_images=50):

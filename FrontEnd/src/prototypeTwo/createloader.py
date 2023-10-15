@@ -5,7 +5,7 @@ from PyQt6.QtCore import Qt
 from PyQt6 import uic
 import numpy as np
 import cv2
-import main as main
+import main
 import noise
 from sklearn.model_selection import train_test_split as train_test_split_sklearn
 

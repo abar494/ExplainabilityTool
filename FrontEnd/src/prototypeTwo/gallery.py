@@ -6,16 +6,13 @@ import builtloader
 import explainer
 import matplotlib.pyplot as plt
 import tensorflow as tf
-from lime.wrappers.scikit_image import SegmentationAlgorithm
 from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QPixmap, QPainter, QFont
 from lime import lime_image
 import numpy as np
 import cv2
-from tensorflow.keras.models import Sequential
-from skimage.segmentation import slic, mark_boundaries, quickshift
+from skimage.segmentation import mark_boundaries
 from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
 from PIL import Image, ImageOps  # Install pillow instead of PIL
 # from keras.models import load_model
 from skimage.segmentation import mark_boundaries
@@ -140,8 +137,6 @@ class Gallery(QWidget):
             # Reshape the image to match the input shape of the model
             ximage = ximage.reshape(-1, 224, 224, 3)
 
-            # segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=300, ratio=0.1)
-
             limeExplain = lime_image.LimeImageExplainer(verbose=False)
 
             validation_datagen = ImageDataGenerator(rescale=1.0/255.0)
@@ -170,54 +165,10 @@ class Gallery(QWidget):
 
             plt.imshow(mark_boundaries(temp, mask))
             plt.axis('off')
-
             truncated_confidence = round(confidence_score*100, 2)
-
-
             plt.title(f"Predicted: {class_name}, {truncated_confidence}% confidence")
-            # plt.set_title(f"Predicted: {class_name}, {truncated_confidence}% confidence")
-
             plt.show()
 
-            print("TESTING ", explanation.top_labels[0])
-            # print(self.loaded_model.predict(image))
-            print(f"Image Clicked! Index: {id}")
-
-
-
-
-            # print("ID is " + id)
-            # print(modelData["iclf"])
-            # print(modelData["y_test"][id])
-            # plt.imshow(modelData["x_test"][id])
-            # plt.show()
-
-        # else:
-        #     print(modelData["iclf"])
-        #     model = load_model(modelData["iclf"], compile=False)
-
-        #     explainer = lime_image.LimeImageExplainer(verbose = False)
-        #     segmenter = SegmentationAlgorithm('quickshift', kernel_size=1, max_dist=200, ratio=0.2)
-
-        #     explanation = explainer.explain_instance(
-        #         self.modelData["x_test"][id], 
-        #         classifier_fn = model.predict_proba, 
-        #         top_labels=10,
-        #         hide_color=0,
-        #         num_samples=2000,
-        #         segmentation_fn=segmenter
-        #     )
-            
-        #     temp, mask = explanation.get_image_and_mask(
-        #         self.modelData["y_test"][id],
-        #         positive_only=False,
-        #         num_features=10,
-        #         hide_rest=False,
-        #         min_weight = 0.01
-        #     )
-
-        #     plt.imshow(mark_boundaries(temp, mask))
-        #     plt.show()
 
 
 
