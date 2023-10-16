@@ -164,6 +164,7 @@ class ClassifierSelect(QWidget):
     def clfSelect(self, data):
         self.clf = self.sender().objectName()
         self.call = data[self.clf]["call"]
+        self.comp = data[self.clf]["comp"]
         self.hps = data[self.clf]["hps"]
         self.VarHpComb.clear()
 
@@ -209,8 +210,10 @@ class ClassifierSelect(QWidget):
 
     def modelSelected(self):
         for hpName in self.params.keys():
-            if str(self.params[hpName]).isdigit():
+
+            if  str(self.params[hpName]).replace('.','',1).isdigit():
                 self.params[hpName] = int(self.params[hpName])
+
             if self.params[hpName] == "Custom":
                 for i in range(1, len(self.hps.keys())+1):
                     lab = self.findChild(QLabel, "hp"+str(i)+"Lab")
@@ -232,6 +235,11 @@ class ClassifierSelect(QWidget):
                 vals.remove("Custom")
                 vals = [int(val) for val in vals]
 
+
+        for key in self.comp.keys():
+            self.params[key] = self.comp[key]
+
+
         prefs = {
             "hps": self.params,
             "clf": self.call,
@@ -239,6 +247,7 @@ class ClassifierSelect(QWidget):
             "vals": vals
         }
 
+        
         dp = dataprocessor.DataProcessor(prefs, self.modelData)
         self.modelData = {
             "x_train": dp.x_train,

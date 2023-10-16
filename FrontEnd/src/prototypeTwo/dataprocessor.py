@@ -20,7 +20,8 @@ class DataProcessor():
         self.pipelineDict = self.initialisePipelineDict()
 
         self.hps = prefs["hps"]
-        self.hps["probability"] = True
+        # self.hps["probability"] = True
+        # self.hps["loss"] = "modified_huber"
         self.clfType = prefs["clf"]
         self.var = prefs["var"]
         self.vals = prefs["vals"]
@@ -97,6 +98,11 @@ class DataProcessor():
 
     def getPipeline(self, pipes):
         # Split the clfType string into a class and module name
+
+        for key in self.hps.keys():
+            if  str(self.hps[key]).replace('.','',1).isdigit():
+                self.hps[key] = int(self.hps[key])
+
         splittedClf = self.clfType.split('.')
         class_name = splittedClf[-1]
         module_name = '.'.join(splittedClf[:-1])

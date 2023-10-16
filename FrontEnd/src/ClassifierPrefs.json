@@ -1,22 +1,20 @@
 {
-    "Naive Bayes": {
-        "call": "GaussianNB",
+    "Stochastic Grad": {
+        "call": "sklearn.linear_model.SGDClassifier",
+        "comp": {"loss": "modified_huber"},
         "hps": {
-            "A": ["a", "b", "c", "d", "e"],
-            "B": ["1", "2", "3", "4", "5"],
-            "C": ["2", "4", "6", "8", "10"]
+            "penalty": ["l2", "elasticnet"],
+            "verbose": ["1", "2", "4", "6"],
+            "max_iter": ["1", "2", "4", "8"]
         }
     },
     "Support Vector Machine": {
         "call": "sklearn.svm.SVC",
+        "comp": {"probability": "True"},
         "hps": {
             "C": ["1", "2", "3", "5", "Custom"],
             "kernel": ["linear", "poly", "rbf"],
             "gamma": ["1", "2", "3", "4", "5", "Custom"]
         }
-    },
-    "Random Forest": {
-        "call": "RandomForestClassifier",
-        "hps": {}
     }
 }
